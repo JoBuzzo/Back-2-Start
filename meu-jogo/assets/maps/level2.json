@@ -2,15 +2,15 @@
   "title": "Level 2 - Dirt Road",
   "nextLevel": null,
   "checkpoint": {
-    "x": 25,
-    "y": 29
+    "x": 2,
+    "y": 2
   },
   "spawns": [
-    { "x": 10, "y": 30 },
-    { "x": 12, "y": 30 },
-    { "x": 14, "y": 30 },
-    { "x": 16, "y": 30 },
-    { "x": 18, "y": 30 }
+    { "x": 40, "y": 30 },
+    { "x": 42, "y": 30 },
+    { "x": 44, "y": 30 },
+    { "x": 38, "y": 30 },
+    { "x": 36, "y": 30 }
   ],
   "tiles": [
     "assets/tiles/dirtroad/Ground_Tile_01_A.png",

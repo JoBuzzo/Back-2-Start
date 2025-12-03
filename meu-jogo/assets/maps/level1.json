@@ -2,8 +2,8 @@
   "title": "Level 1 - Highway",
   "nextLevel": "assets/maps/level2.json",
   "checkpoint": {
-    "x": 25,
-    "y": 10
+    "x": 45,
+    "y": 2
   },
   "spawns": [
     { "x": 10, "y": 30 },

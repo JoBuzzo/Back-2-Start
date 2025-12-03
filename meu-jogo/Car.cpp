@@ -96,5 +96,5 @@ void Car::collide(std::vector<Player*>& players) {
 }
 
 void Car::reloadBitMap() {
-    sprite = al_load_bitmap(spritePath);
+    sprite = al_load_bitmap(spritePath.c_str());
 }

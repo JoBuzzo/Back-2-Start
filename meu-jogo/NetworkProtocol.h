@@ -6,7 +6,9 @@ enum PacketType {
     PACKET_INPUT,  // Cliente enviando tecla
     PACKET_STATE,   // Servidor enviando posiçoes
     PACKET_ENTITY_STATE,
-    PACKET_WELCOME
+    PACKET_WELCOME,
+    PACKET_START_TRANSITION, // para começar a animar a saída
+    PACKET_CHANGE_LEVEL // Carrega o mapa da proxima fase
 };
 
 // Pacote enviado do CLIENTE para o SERVIDOR
@@ -30,6 +32,7 @@ struct StatePacket {
     int current_frame_y;
 
     bool isMoving;
+    bool isFinished;
 };
 
 

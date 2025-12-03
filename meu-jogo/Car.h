@@ -4,11 +4,12 @@
 #include <vector>
 #include "Player.h"
 #include "Config.h"
+#include <string>
 
 class Car {
 public:
     ALLEGRO_BITMAP* sprite;
-    const char* spritePath;
+    std::string spritePath;
 
     int w, h;
     int posX, posY;
