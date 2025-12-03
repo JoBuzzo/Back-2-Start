@@ -5,7 +5,8 @@
 enum PacketType {
     PACKET_INPUT,  // Cliente enviando tecla
     PACKET_STATE,   // Servidor enviando posiçoes
-    PACKET_ENTITY_STATE
+    PACKET_ENTITY_STATE,
+    PACKET_WELCOME
 };
 
 // Pacote enviado do CLIENTE para o SERVIDOR
@@ -29,5 +30,11 @@ struct StatePacket {
     int current_frame_y;
 
     bool isMoving;
+};
+
+
+struct WelcomePacket {
+    int type = PACKET_WELCOME;
+    int assignedId; // O ID que o servidor escolheu para o player
 };
 #endif
