@@ -39,4 +39,11 @@ public:
         posX = (WMAP * BLOCKSIZE / 2) - 16;
         posY = HMAP * BLOCKSIZE - 64;
 	}
+
+    void destroy() {
+        if (sprite) {
+            al_destroy_bitmap(sprite);
+            sprite = nullptr;
+        }
+    }
 };

@@ -5,10 +5,16 @@
 #include <allegro5/allegro_ttf.h>
 #include <allegro5/allegro_font.h>
 
+#include <vector>
 #include <ostream>
-#include "BaseMap.h"
-#include "Chicken.h"
 #include "Car.h"
+#include "Player.h"
+#include "BaseMap.h"
+#include "Bull.h"
+#include "Chicken.h"
+#include "Pig.h"
+#include "Sheep.h"
+#include "Turkey.h"
 
 int main() {
     al_init();
@@ -18,7 +24,6 @@ int main() {
     al_init_image_addon();
     al_install_keyboard();
 
-    // al_set_new_display_flags(ALLEGRO_FULLSCREEN);
     ALLEGRO_DISPLAY* display = al_create_display(SCREENWIDTH, SCREENHEIGHT);
     al_set_window_title(display, "Street Tile!");
 
@@ -45,7 +50,13 @@ int main() {
         return -1;
     }
 
-    Chicken player;
+    std::vector<Player*> players;
+    players.push_back(new Chicken());
+    players.push_back(new Bull());
+    players.push_back(new Pig());
+    players.push_back(new Sheep());
+    players.push_back(new Turkey());
+
     bool redraw = true;
 
     while (true) {
@@ -55,24 +66,31 @@ int main() {
                 redraw = true;
             }
             else if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
-                return 0;
+                goto cleanup;
             }
             else if (ev.type == ALLEGRO_EVENT_KEY_DOWN) {
-                player.keyDOWN(ev.keyboard.keycode);
+                for (auto& p : players) p->keyDOWN(ev.keyboard.keycode);
             }
             else if (ev.type == ALLEGRO_EVENT_KEY_UP) {
-                player.keyUP(ev.keyboard.keycode);
+                for (auto& p : players) p->keyUP(ev.keyboard.keycode);
             }
         }
 
         if (redraw && al_is_event_queue_empty(queue)) {
             redraw = false;
 
-            player.move();
+            for (auto& p : players) {
+                p->move();
+            }
 
             for (auto& e : baseMap.entities) {
                 e->move();
-                e->collide(player);
+            }
+
+            for (auto& p : players) {
+                for (auto& e : baseMap.entities) {
+                    e->collide(*p);
+                }
             }
 
             al_clear_to_color(al_map_rgb(0, 0, 0));
@@ -82,14 +100,16 @@ int main() {
                 e->draw();
             }
 
-            player.draw();
+            for (auto& p : players) {
+                p->draw();
+            }
 
             al_draw_text(font, al_map_rgb(255, 255, 255), BLOCKSIZE * 35, 7, 0, "Fase 1");
-
             al_flip_display();
         }
     }
 
+cleanup:
     for (int i = 0; i < baseMap.tileNames.size(); i++)
         if (baseMap.tiles[i]) al_destroy_bitmap(baseMap.tiles[i]);
 
@@ -98,5 +118,15 @@ int main() {
         delete e;
     }
 
+    for (auto& p : players) {
+        p->destroy();
+        delete p;
+    }
+
     al_destroy_display(display);
+    al_destroy_font(font);
+    al_destroy_timer(timer);
+    al_destroy_event_queue(queue);
+
+    return 0;
 }
