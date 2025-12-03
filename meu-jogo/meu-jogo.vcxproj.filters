@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Arquivos de Origem">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Arquivos de Cabeçalho">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Arquivos de Recurso">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Arquivos de Cabeçalho\entities">
+      <UniqueIdentifier>{af27f4a8-106f-4d3b-bff5-00b286dac125}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Cabeçalho\entities\cars">
+      <UniqueIdentifier>{2cdabf5a-27f1-4c75-82fb-94497aba2152}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Cabeçalho\entities\players">
+      <UniqueIdentifier>{17a3859a-d561-45f6-9896-db1ff3d5492d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Cabeçalho\Maps">
+      <UniqueIdentifier>{d84e3cb7-e1d8-49ef-a448-e49a9328c500}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Arquivos de Origem</Filter>
+    </ClCompile>
+    <ClCompile Include="Car.cpp">
+      <Filter>Arquivos de Origem</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>Arquivos de Origem</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseMap.cpp">
+      <Filter>Arquivos de Origem</Filter>
+    </ClCompile>
+    <ClCompile Include="Chicken.cpp">
+      <Filter>Arquivos de Origem</Filter>
+    </ClCompile>
+    <ClCompile Include="Turkey.cpp">
+      <Filter>Arquivos de Origem</Filter>
+    </ClCompile>
+    <ClCompile Include="Sheep.cpp">
+      <Filter>Arquivos de Origem</Filter>
+    </ClCompile>
+    <ClCompile Include="Bull.cpp">
+      <Filter>Arquivos de Origem</Filter>
+    </ClCompile>
+    <ClCompile Include="Pig.cpp">
+      <Filter>Arquivos de Origem</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Car.h">
+      <Filter>Arquivos de Cabeçalho\entities\cars</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.h">
+      <Filter>Arquivos de Cabeçalho\entities\players</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseMap.h">
+      <Filter>Arquivos de Cabeçalho\Maps</Filter>
+    </ClInclude>
+    <ClInclude Include="Config.h">
+      <Filter>Arquivos de Cabeçalho</Filter>
+    </ClInclude>
+    <ClInclude Include="Chicken.h">
+      <Filter>Arquivos de Cabeçalho\entities\players</Filter>
+    </ClInclude>
+    <ClInclude Include="Turkey.h">
+      <Filter>Arquivos de Cabeçalho\entities\players</Filter>
+    </ClInclude>
+    <ClInclude Include="Sheep.h">
+      <Filter>Arquivos de Cabeçalho\entities\players</Filter>
+    </ClInclude>
+    <ClInclude Include="Bull.h">
+      <Filter>Arquivos de Cabeçalho\entities\players</Filter>
+    </ClInclude>
+    <ClInclude Include="Pig.h">
+      <Filter>Arquivos de Cabeçalho\entities\players</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
