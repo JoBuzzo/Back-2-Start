@@ -86,5 +86,8 @@
     <ClInclude Include="Pig.h">
       <Filter>Arquivos de Cabeçalho\entities\players</Filter>
     </ClInclude>
+    <ClInclude Include="NetworkProtocol.h">
+      <Filter>Arquivos de Cabeçalho</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

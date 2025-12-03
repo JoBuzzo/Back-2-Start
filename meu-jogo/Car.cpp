@@ -1,5 +1,6 @@
 #include "Car.h"
 #include <cstdio>
+#include <vector>
 
 Car::Car()
     : sprite(nullptr), spritePath("test.png"), w(0), h(64), posX(0), posY(0), speed(0), movingLeft(false), active(false)
@@ -52,8 +53,8 @@ void Car::move() {
     
 }
 
-void Car::collide(Player& player) {
-    if (!active) return;
+bool Car::collide(Player& player) {
+    if (!active) return false;
 
     int carLeft = posX + 16;
     int carRight = posX + w - 16;
@@ -70,6 +71,27 @@ void Car::collide(Player& player) {
     {
         player.posX = (WMAP * BLOCKSIZE / 2) - 16;
         player.posY = HMAP * BLOCKSIZE - 64;
+        
+        return true;
+    }
+
+    return false;
+}
+
+void Car::collide(std::vector<Player*>& players) {
+    if (!active) return;
+
+    bool anyCollide = false;
+
+    for (auto& player : players) {
+        if (collide(*player)){
+            anyCollide = true;
+        }
+    }
+    if (anyCollide) {
+        for (auto& player : players) {
+            player->resetPos();
+        }
     }
 }
 

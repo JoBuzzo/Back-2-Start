@@ -2,7 +2,7 @@
 #include "Player.h"
 class Turkey : public Player {
 public:
-	char urlSprite[100] = "assets/sprites/turkey.png";
+	char urlSprite[100] = "assets/sprites/players/turkey.png";
 	Turkey();
 
 	void reloadBitmap();

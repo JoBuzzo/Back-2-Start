@@ -1,6 +1,7 @@
 #pragma once
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_image.h>
+#include <vector>
 #include "Player.h"
 #include "Config.h"
 
@@ -25,6 +26,7 @@ public:
     virtual void draw();
     virtual void destroy();
     virtual void move();
-    virtual void collide(Player& player);
+    virtual bool collide(Player& player);
+    virtual void collide(std::vector<Player*>& players);
     virtual void reloadBitMap();
 };
