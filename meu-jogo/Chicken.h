@@ -5,7 +5,7 @@
 
 class Chicken : public Player {
 public:
-    char urlSprite[100] = "assets/sprites/chicken.png";
+    char urlSprite[100] = "assets/sprites/players/chicken.png";
 
     Chicken();
 

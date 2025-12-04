@@ -1,7 +1,5 @@
 #include "Turkey.h"
-#include "Config.h"
-#include <allegro5/allegro.h>
-#include <allegro5/allegro_image.h>
+#include "ResourceManager.h"
 
 Turkey::Turkey() {
 	w = 32;
@@ -10,12 +8,11 @@ Turkey::Turkey() {
 	current_frame_y = 0;
 	posX = (WMAP * BLOCKSIZE / 2) - 16;
 	posY = HMAP * BLOCKSIZE - 64;
-	sprite = al_load_bitmap(urlSprite);
+	sprite = ResourceManager::get().getBitmap(urlSprite);
 }
 
 void Turkey::reloadBitmap() {
-	if (sprite) al_destroy_bitmap(sprite);
-	sprite = al_load_bitmap(urlSprite);
+	sprite = ResourceManager::get().getBitmap(urlSprite);
 }
 
 void Turkey::keyDOWN(int keycode) {

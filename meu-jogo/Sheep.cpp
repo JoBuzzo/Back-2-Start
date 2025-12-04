@@ -1,7 +1,5 @@
 #include "Sheep.h"
-#include "Config.h"
-#include <allegro5/allegro.h>
-#include <allegro5/allegro_image.h>
+#include "ResourceManager.h"
 
 Sheep::Sheep() {
 	w = 32;
@@ -10,11 +8,11 @@ Sheep::Sheep() {
 	current_frame_y = 0;
 	posX = (WMAP * BLOCKSIZE / 2) - 16;
 	posY = HMAP * BLOCKSIZE - 64;
-	sprite = al_load_bitmap(urlSprite);
+	sprite = ResourceManager::get().getBitmap(urlSprite);
 }
+
 void Sheep::reloadBitmap() {
-	if (sprite) al_destroy_bitmap(sprite);
-	sprite = al_load_bitmap(urlSprite);
+	sprite = ResourceManager::get().getBitmap(urlSprite);
 }
 
 void Sheep::keyDOWN(int keycode) {

@@ -1,8 +1,12 @@
 #include "Car.h"
 #include <cstdio>
+#include <vector>
+#include "ResourceManager.h"
 
 Car::Car()
-    : sprite(nullptr), spritePath("test.png"), w(0), h(64), posX(0), posY(0), speed(0), movingLeft(false), active(false)
+    : sprite(nullptr), spritePath("test.png"), w(0), h(64), posX(0), posY(0),
+    speed(0), movingLeft(false), active(false),
+    animated(false), frameCount(1), currentFrame(0.0f)
 {
 }
 
@@ -21,39 +25,61 @@ void Car::setDirection() {
 }
 
 void Car::draw() {
-    if (!active) return;
+    if (!active || frames.empty()) return;
+
+    if (animated) {
+        currentFrame += 0.1f;
+        if (currentFrame >= frameCount) currentFrame -= frameCount;
+    }
+
+    int index = (int)currentFrame;
+    if (index >= frames.size()) index = 0;
+    ALLEGRO_BITMAP* currentSprite = frames[index];
 
     if (movingLeft) {
-        al_draw_bitmap(sprite, posX, posY, ALLEGRO_FLIP_HORIZONTAL);
+        al_draw_bitmap(currentSprite, posX, posY, 0);
     }
     else {
-        al_draw_bitmap(sprite, posX, posY, 0);
+        al_draw_bitmap(currentSprite, posX, posY, ALLEGRO_FLIP_HORIZONTAL);
     }
 }
 
 void Car::destroy() {
-    if (sprite) {
-        al_destroy_bitmap(sprite);
-        sprite = nullptr;
+
+    for (auto f : frames) {
+        al_destroy_bitmap(f);
     }
+    frames.clear();
+
+    sprite = nullptr;
 }
 
 void Car::move() {
     if (!active) return;
 
-    posX += speed;
+    float moveSpeed = std::abs(speed);
 
-    if (posX > WMAP * BLOCKSIZE) {
-        posX = -w;
+    if (movingLeft) {
+        posX -= moveSpeed;
     }
-    else if (posX + w < 0) {
-        posX = WMAP * BLOCKSIZE;
+    else {
+        posX += moveSpeed;
     }
-    
+
+    if (movingLeft) {
+        if (posX + w < 0) {
+            posX = WMAP * BLOCKSIZE;
+        }
+    }
+    else {
+        if (posX > WMAP * BLOCKSIZE) {
+            posX = -w;
+        }
+    }
 }
 
-void Car::collide(Player& player) {
-    if (!active) return;
+bool Car::collide(Player& player) {
+    if (!active) return false;
 
     int carLeft = posX + 16;
     int carRight = posX + w - 16;
@@ -67,12 +93,45 @@ void Car::collide(Player& player) {
 
     if (carLeft < playerRight && carRight > playerLeft &&
         carTop < playerBottom && carBottom > playerTop)
-    {
-        player.posX = (WMAP * BLOCKSIZE / 2) - 16;
-        player.posY = HMAP * BLOCKSIZE - 64;
+    {        
+        return true;
     }
+
+    return false;
+}
+
+bool Car::checkCollision(std::vector<Player*>& players) {
+    if (!active) return false;
+
+    for (auto& player : players) {
+        if (collide(*player)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void Car::reloadBitMap() {
-    sprite = al_load_bitmap(spritePath);
+    destroy();
+
+    sprite = ResourceManager::get().getBitmap(spritePath);
+
+    if (!sprite) {
+        return;
+    }
+
+    int totalWidth = al_get_bitmap_width(sprite);
+    int totalHeight = al_get_bitmap_height(sprite);
+
+    if (frameCount < 1) frameCount = 1;
+
+    h = totalHeight;
+    w = totalWidth / frameCount;
+
+    for (int i = 0; i < frameCount; i++) {
+        ALLEGRO_BITMAP* sub = al_create_sub_bitmap(sprite, i * w, 0, w, h);
+        if (sub) {
+            frames.push_back(sub);
+        }
+    }
 }
