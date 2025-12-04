@@ -24,6 +24,10 @@
 #include "Sheep.h"
 #include "Turkey.h"
 
+// --- CONSTANTES ---
+const int MSG_LOAD_MAP = 0;
+const int MSG_END_GAME = 1;
+
 // --- ESTADOS DO JOGO ---
 enum GameState { STATE_MENU, STATE_GAME, STATE_PAUSE, STATE_ENDGAME };
 
@@ -107,16 +111,13 @@ int main() {
     al_install_keyboard();
     al_install_mouse();
 
-    // Tela Cheia
     al_set_new_display_flags(ALLEGRO_FULLSCREEN_WINDOW);
     ALLEGRO_DISPLAY* display = al_create_display(SCREENWIDTH, SCREENHEIGHT);
     al_set_window_title(display, "Back 2 Start");
 
-    // Ícone
     ALLEGRO_BITMAP* icon = al_load_bitmap("assets/icon.png");
     if (icon) { al_set_display_icon(display, icon); al_destroy_bitmap(icon); }
 
-    // Cálculo de Zoom
     int monitorW = al_get_display_width(display);
     int monitorH = al_get_display_height(display);
     float sx = monitorW / (float)SCREENWIDTH;
@@ -148,7 +149,6 @@ int main() {
     GameState currentState = STATE_MENU;
     std::string inputIP = "127.0.0.1";
 
-    // Botões
     int btnW = 300; int btnH = 50;
     int centerX = SCREENWIDTH / 2 - (btnW / 2);
 
@@ -165,12 +165,8 @@ int main() {
     auto resetPlayersToSpawn = [&](BaseMap& map, std::vector<Player*>& pList) {
         for (size_t i = 0; i < pList.size(); i++) {
             pList[i]->finished = false;
-            if (i < map.spawnPoints.size()) {
-                pList[i]->setPos(map.spawnPoints[i].x, map.spawnPoints[i].y);
-            }
-            else {
-                pList[i]->setPos(100 + i * 32, 100);
-            }
+            if (i < map.spawnPoints.size()) pList[i]->setPos(map.spawnPoints[i].x, map.spawnPoints[i].y);
+            else pList[i]->setPos(100 + i * 32, 100);
         }
         };
 
@@ -181,7 +177,7 @@ int main() {
         if (ev.type == ALLEGRO_EVENT_TIMER) {
             redraw = true;
 
-            // --- TRANSIÇÃO ---
+            // --- LÓGICA DE TRANSIÇÃO (SERVIDOR) ---
             if (isTransitioning) {
                 transitionAlpha += 0.02f;
                 if (transitionAlpha >= 1.0f) {
@@ -189,11 +185,14 @@ int main() {
 
                     if (isServer) {
                         if (!baseMap.nextLevelPath.empty()) {
+                            // CARREGAR FASE
                             baseMap.loadMapFromJson(baseMap.nextLevelPath);
                             resetPlayersToSpawn(baseMap, players);
 
                             int type = PACKET_CHANGE_LEVEL;
-                            ENetPacket* p = enet_packet_create(&type, sizeof(int), ENET_PACKET_FLAG_RELIABLE);
+                            int code = MSG_LOAD_MAP;
+                            int data[2] = { type, code };
+                            ENetPacket* p = enet_packet_create(data, sizeof(data), ENET_PACKET_FLAG_RELIABLE);
                             enet_host_broadcast(netHost, 0, p);
 
                             isTransitioning = false;
@@ -201,6 +200,16 @@ int main() {
                             transitionAlpha = 0.0f;
                         }
                         else {
+                            // FIM DE JOGO
+                            int type = PACKET_CHANGE_LEVEL;
+                            int code = MSG_END_GAME;
+                            int data[2] = { type, code };
+                            ENetPacket* p = enet_packet_create(data, sizeof(data), ENET_PACKET_FLAG_RELIABLE);
+                            enet_host_broadcast(netHost, 0, p);
+
+                            // Força o envio imediato antes de mudar o estado local
+                            enet_host_flush(netHost);
+
                             currentState = STATE_ENDGAME;
                             isTransitioning = false;
                         }
@@ -208,21 +217,19 @@ int main() {
                 }
             }
 
-            // --- REDE ---
-            if (currentState == STATE_GAME || currentState == STATE_PAUSE) {
+            // --- REDE (CORREÇÃO AQUI: Permite rede no STATE_ENDGAME) ---
+            if (currentState == STATE_GAME || currentState == STATE_PAUSE || currentState == STATE_ENDGAME) {
                 if (netHost) {
                     ENetEvent netEvent;
                     while (enet_host_service(netHost, &netEvent, 0) > 0) {
                         switch (netEvent.type) {
                         case ENET_EVENT_TYPE_CONNECT:
-                            if (isServer) {
-                                if (nextPlayerId < players.size()) {
-                                    WelcomePacket wpkt;
-                                    wpkt.assignedId = nextPlayerId;
-                                    ENetPacket* packet = enet_packet_create(&wpkt, sizeof(WelcomePacket), ENET_PACKET_FLAG_RELIABLE);
-                                    enet_peer_send(netEvent.peer, 0, packet);
-                                    nextPlayerId++;
-                                }
+                            if (isServer && nextPlayerId < players.size()) {
+                                WelcomePacket wpkt;
+                                wpkt.assignedId = nextPlayerId;
+                                ENetPacket* packet = enet_packet_create(&wpkt, sizeof(WelcomePacket), ENET_PACKET_FLAG_RELIABLE);
+                                enet_peer_send(netEvent.peer, 0, packet);
+                                nextPlayerId++;
                             }
                             break;
                         case ENET_EVENT_TYPE_RECEIVE:
@@ -237,22 +244,14 @@ int main() {
                                     else if (type == PACKET_STATE) {
                                         StatePacket* pkt = (StatePacket*)netEvent.packet->data;
                                         if (pkt->id >= 0 && pkt->id < players.size()) {
-                                            // --- CORREÇÃO AQUI: PASSANDO isFinished ---
-                                            players[pkt->id]->setNetworkState(
-                                                pkt->x,
-                                                pkt->y,
-                                                pkt->current_frame_y,
-                                                pkt->isMoving,
-                                                pkt->isFinished // Novo parâmetro!
-                                            );
+                                            players[pkt->id]->setNetworkState(pkt->x, pkt->y, pkt->current_frame_y, pkt->isMoving, pkt->isFinished);
                                         }
                                     }
                                     else if (type == PACKET_ENTITY_STATE) {
                                         StatePacket* pkt = (StatePacket*)netEvent.packet->data;
                                         if (pkt->id >= 0 && pkt->id < baseMap.entities.size()) {
                                             Car* car = (Car*)baseMap.entities[pkt->id];
-                                            car->posX = (int)pkt->x;
-                                            car->posY = (int)pkt->y;
+                                            car->posX = (int)pkt->x; car->posY = (int)pkt->y;
                                             car->movingLeft = (pkt->current_frame_y == 1);
                                         }
                                     }
@@ -262,14 +261,21 @@ int main() {
                                         transitionAlpha = 0.0f;
                                     }
                                     else if (type == PACKET_CHANGE_LEVEL) {
-                                        if (!baseMap.nextLevelPath.empty()) {
-                                            baseMap.loadMapFromJson(baseMap.nextLevelPath);
-                                            isTransitioning = false;
-                                            doorClosed = false;
-                                            transitionAlpha = 0.0f;
-                                        }
-                                        else {
-                                            currentState = STATE_ENDGAME;
+                                        if (netEvent.packet->dataLength >= sizeof(int) * 2) {
+                                            int* data = (int*)netEvent.packet->data;
+                                            int code = data[1];
+
+                                            if (code == MSG_LOAD_MAP) {
+                                                if (!baseMap.nextLevelPath.empty()) {
+                                                    baseMap.loadMapFromJson(baseMap.nextLevelPath);
+                                                    isTransitioning = false;
+                                                    doorClosed = false;
+                                                    transitionAlpha = 0.0f;
+                                                }
+                                            }
+                                            else if (code == MSG_END_GAME) {
+                                                currentState = STATE_ENDGAME;
+                                            }
                                         }
                                     }
                                 }
@@ -297,17 +303,13 @@ int main() {
                         for (int i = 0; i < activePlayers; i++) {
                             players[i]->move();
                             players[i]->updateMovingState();
-
                             if (!players[i]->finished) {
-                                if (baseMap.checkBusCollision(players[i]->posX, players[i]->posY, 32, 32)) {
-                                    players[i]->finished = true;
-                                }
+                                if (baseMap.checkBusCollision(players[i]->posX, players[i]->posY, 32, 32)) players[i]->finished = true;
                             }
                             else {
                                 finishedCount++;
                             }
                         }
-
                         for (auto& e : baseMap.entities) e->move();
                         for (auto& e : baseMap.entities) e->collide(players);
 
@@ -315,20 +317,17 @@ int main() {
                             isTransitioning = true;
                             doorClosed = true;
                             transitionAlpha = 0.0f;
-
                             int type = PACKET_START_TRANSITION;
                             ENetPacket* p = enet_packet_create(&type, sizeof(int), ENET_PACKET_FLAG_RELIABLE);
                             enet_host_broadcast(netHost, 0, p);
                         }
 
-                        // BROADCAST
+                        // Broadcast
                         for (int i = 0; i < players.size(); i++) {
                             StatePacket pkt; pkt.type = PACKET_STATE; pkt.id = i;
                             pkt.x = players[i]->posX; pkt.y = players[i]->posY;
                             pkt.current_frame_y = players[i]->current_frame_y; pkt.isMoving = players[i]->isMoving;
-
                             pkt.isFinished = players[i]->finished;
-
                             ENetPacket* packet = enet_packet_create(&pkt, sizeof(StatePacket), ENET_PACKET_FLAG_UNSEQUENCED);
                             enet_host_broadcast(netHost, 0, packet);
                         }
@@ -337,8 +336,7 @@ int main() {
                             StatePacket pkt; pkt.type = PACKET_ENTITY_STATE; pkt.id = i;
                             pkt.x = car->posX; pkt.y = car->posY;
                             pkt.current_frame_y = car->movingLeft ? 1 : 0; pkt.isMoving = true;
-                            pkt.isFinished = false; // Carros nunca somem dessa forma
-
+                            pkt.isFinished = false;
                             ENetPacket* packet = enet_packet_create(&pkt, sizeof(StatePacket), ENET_PACKET_FLAG_UNSEQUENCED);
                             enet_host_broadcast(netHost, 0, packet);
                         }
@@ -454,16 +452,11 @@ int main() {
                 for (auto& e : baseMap.entities) e->draw();
                 for (auto& p : players) p->draw();
 
-                if (fontSmall) {
-                    al_draw_text(fontSmall, al_map_rgb(255, 255, 255), SCREENWIDTH - 10, 10, ALLEGRO_ALIGN_RIGHT, baseMap.title.c_str());
-                }
-
+                if (fontSmall) al_draw_text(fontSmall, al_map_rgb(255, 255, 255), SCREENWIDTH - 10, 10, ALLEGRO_ALIGN_RIGHT, baseMap.title.c_str());
                 if (myPlayerId == -1) al_draw_text(font, al_map_rgb(255, 0, 0), 10, 10, 0, "CONECTANDO...");
                 else al_draw_textf(font, al_map_rgb(255, 255, 255), 10, 10, 0, "Player ID: %d", myPlayerId);
 
-                if (transitionAlpha > 0.0f) {
-                    al_draw_filled_rectangle(0, 0, SCREENWIDTH, SCREENHEIGHT, al_map_rgba_f(0, 0, 0, transitionAlpha));
-                }
+                if (transitionAlpha > 0.0f) al_draw_filled_rectangle(0, 0, SCREENWIDTH, SCREENHEIGHT, al_map_rgba_f(0, 0, 0, transitionAlpha));
 
                 if (currentState == STATE_PAUSE) {
                     al_draw_filled_rectangle(0, 0, SCREENWIDTH, SCREENHEIGHT, al_map_rgba(0, 0, 0, 150));
@@ -477,11 +470,9 @@ int main() {
                 al_draw_text(font, al_map_rgb(255, 255, 255), SCREENWIDTH / 2, SCREENHEIGHT / 2 + 20, ALLEGRO_ALIGN_CENTRE, "VOCES COMPLETARAM O JOGO.");
                 al_draw_text(font, al_map_rgb(100, 100, 100), SCREENWIDTH / 2, SCREENHEIGHT - 50, ALLEGRO_ALIGN_CENTRE, "Pressione ESC para voltar");
             }
-
             al_flip_display();
         }
     }
-
     disconnectNetwork();
     if (netHost) enet_host_destroy(netHost);
     for (int i = 0; i < baseMap.tileNames.size(); i++) if (baseMap.tiles[i]) al_destroy_bitmap(baseMap.tiles[i]);
