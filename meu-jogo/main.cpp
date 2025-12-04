@@ -1,4 +1,6 @@
+#define _CRT_SECURE_NO_WARNINGS 
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
+
 #include "Config.h"
 #include <allegro5/allegro5.h>
 #include <allegro5/allegro_primitives.h>
@@ -9,12 +11,14 @@
 #include "NetworkProtocol.h"
 #include <string>
 #include <algorithm>
+#include <string.h>
+#include <iostream>
+#include <vector>
 
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "winmm.lib")
 
-#include <vector>
-#include <iostream>
+// --- INCLUDES DOS OBJETOS ---
 #include "Car.h"
 #include "Player.h"
 #include "BaseMap.h"
@@ -24,14 +28,17 @@
 #include "Sheep.h"
 #include "Turkey.h"
 
-// --- CONSTANTES ---
+// --- CONSTANTS ---
 const int MSG_LOAD_MAP = 0;
 const int MSG_END_GAME = 1;
 
-// --- ESTADOS DO JOGO ---
+// Global variable to track server state
+std::string serverCurrentLevel = "assets/maps/level1.json";
+
+// --- GAME STATES ---
 enum GameState { STATE_MENU, STATE_GAME, STATE_PAUSE, STATE_ENDGAME };
 
-// --- ESTRUTURA DE BOTÃO ---
+// --- BUTTON STRUCT ---
 struct Button {
     int x, y, w, h;
     const char* text;
@@ -47,19 +54,19 @@ struct Button {
     }
 };
 
-// --- VARIÁVEIS GLOBAIS DE REDE ---
+// --- GLOBAL NETWORK VARS ---
 ENetHost* netHost = nullptr;
 ENetPeer* netPeer = nullptr;
 bool isServer = false;
 int myPlayerId = -1;
 int nextPlayerId = 1;
 
-// --- VARIÁVEIS DE TRANSIÇÃO DE FASE ---
+// --- TRANSITION VARS ---
 bool isTransitioning = false;
 float transitionAlpha = 0.0f;
 bool doorClosed = false;
 
-// --- FUNÇÕES DE REDE ---
+// --- NETWORK HELPER FUNCTIONS ---
 bool startHost() {
     isServer = true;
     myPlayerId = 0;
@@ -68,7 +75,11 @@ bool startHost() {
     address.host = ENET_HOST_ANY;
     address.port = 1234;
     netHost = enet_host_create(&address, 32, 2, 0, 0);
-    return (netHost != NULL);
+    if (netHost) {
+        printf("[NETWORK] Host started on port 1234\n");
+        return true;
+    }
+    return false;
 }
 
 bool startClient(std::string ip) {
@@ -80,12 +91,17 @@ bool startClient(std::string ip) {
     enet_address_set_host(&address, ip.c_str());
     address.port = 1234;
     netPeer = enet_host_connect(netHost, &address, 2, 0);
-    return (netPeer != NULL);
+    if (netPeer) {
+        printf("[NETWORK] Client connecting to %s...\n", ip.c_str());
+        return true;
+    }
+    return false;
 }
 
 void disconnectNetwork() {
     if (netPeer) { enet_peer_disconnect_now(netPeer, 0); netPeer = nullptr; }
     if (netHost) { enet_host_destroy(netHost); netHost = nullptr; }
+    printf("[NETWORK] Disconnected.\n");
 }
 
 void sendInputPacket(int keycode, bool isDown) {
@@ -98,11 +114,29 @@ void sendInputPacket(int keycode, bool isDown) {
     enet_peer_send(netPeer, 0, packet);
 }
 
-// --- MAIN ---
+// --- UTILS ---
+void resetPlayersToSpawn(BaseMap& map, std::vector<Player*>& pList) {
+    for (size_t i = 0; i < pList.size(); i++) {
+        pList[i]->finished = false;
+        if (i < map.spawnPoints.size()) {
+            pList[i]->setPos(map.spawnPoints[i].x, map.spawnPoints[i].y);
+        }
+        else {
+            pList[i]->setPos(100 + (int)i * 32, 100);
+        }
+    }
+}
+
+// --- MAIN FUNCTION ---
 int main() {
-    if (enet_initialize() != 0) return 1;
+    // 1. Initialize ENet
+    if (enet_initialize() != 0) {
+        fprintf(stderr, "An error occurred while initializing ENet.\n");
+        return 1;
+    }
     atexit(enet_deinitialize);
 
+    // 2. Initialize Allegro
     if (!al_init()) return -1;
     al_init_font_addon();
     al_init_ttf_addon();
@@ -111,6 +145,7 @@ int main() {
     al_install_keyboard();
     al_install_mouse();
 
+    // 3. Display Setup
     al_set_new_display_flags(ALLEGRO_FULLSCREEN_WINDOW);
     ALLEGRO_DISPLAY* display = al_create_display(SCREENWIDTH, SCREENHEIGHT);
     al_set_window_title(display, "Back 2 Start");
@@ -118,6 +153,7 @@ int main() {
     ALLEGRO_BITMAP* icon = al_load_bitmap("assets/icon.png");
     if (icon) { al_set_display_icon(display, icon); al_destroy_bitmap(icon); }
 
+    // 4. Scaling Logic
     int monitorW = al_get_display_width(display);
     int monitorH = al_get_display_height(display);
     float sx = monitorW / (float)SCREENWIDTH;
@@ -132,6 +168,7 @@ int main() {
     al_translate_transform(&trans, scaleX, scaleY);
     al_use_transform(&trans);
 
+    // 5. Assets
     ALLEGRO_FONT* font = al_load_font("assets/fonts/font.ttf", 25, 0);
     ALLEGRO_FONT* fontSmall = al_load_font("assets/fonts/font.ttf", 18, 0);
 
@@ -144,14 +181,15 @@ int main() {
     al_register_event_source(queue, al_get_mouse_event_source());
     al_start_timer(timer);
 
+    // 6. Game Objects
     BaseMap baseMap;
     std::vector<Player*> players;
     GameState currentState = STATE_MENU;
     std::string inputIP = "127.0.0.1";
 
+    // Buttons
     int btnW = 300; int btnH = 50;
     int centerX = SCREENWIDTH / 2 - (btnW / 2);
-
     Button btnHost = { centerX, 150, btnW, btnH, "CRIAR SERVIDOR" };
     Button btnJoin = { centerX, 350, btnW, btnH, "ENTRAR (CLIENTE)" };
     Button btnExit = { centerX, 450, btnW, btnH, "SAIR DO JOGO" };
@@ -162,14 +200,7 @@ int main() {
     bool gameRunning = true;
     float gameMouseX = 0, gameMouseY = 0;
 
-    auto resetPlayersToSpawn = [&](BaseMap& map, std::vector<Player*>& pList) {
-        for (size_t i = 0; i < pList.size(); i++) {
-            pList[i]->finished = false;
-            if (i < map.spawnPoints.size()) pList[i]->setPos(map.spawnPoints[i].x, map.spawnPoints[i].y);
-            else pList[i]->setPos(100 + i * 32, 100);
-        }
-        };
-
+    // --- GAME LOOP ---
     while (gameRunning) {
         ALLEGRO_EVENT ev;
         al_wait_for_event(queue, &ev);
@@ -177,7 +208,9 @@ int main() {
         if (ev.type == ALLEGRO_EVENT_TIMER) {
             redraw = true;
 
-            // --- LÓGICA DE TRANSIÇÃO (SERVIDOR) ---
+            // ==========================================
+            // LOGIC: TRANSITION (SERVER SIDE)
+            // ==========================================
             if (isTransitioning) {
                 transitionAlpha += 0.02f;
                 if (transitionAlpha >= 1.0f) {
@@ -185,29 +218,45 @@ int main() {
 
                     if (isServer) {
                         if (!baseMap.nextLevelPath.empty()) {
-                            // CARREGAR FASE
-                            baseMap.loadMapFromJson(baseMap.nextLevelPath);
-                            resetPlayersToSpawn(baseMap, players);
+                            // --- CORREÇÃO AQUI ---
+                            // 1. Salva o caminho em uma variavel TEMPORARIA antes de carregar
+                            std::string levelToLoad = baseMap.nextLevelPath;
 
-                            int type = PACKET_CHANGE_LEVEL;
-                            int code = MSG_LOAD_MAP;
-                            int data[2] = { type, code };
-                            ENetPacket* p = enet_packet_create(data, sizeof(data), ENET_PACKET_FLAG_RELIABLE);
-                            enet_host_broadcast(netHost, 0, p);
+                            printf("[SERVER] Loading Next Level: %s\n", levelToLoad.c_str());
 
-                            isTransitioning = false;
-                            doorClosed = false;
-                            transitionAlpha = 0.0f;
+                            // 2. Carrega usando a variavel temporaria
+                            if (baseMap.loadMapFromJson(levelToLoad)) {
+
+                                // 3. Atualiza a variavel global com o caminho CORRETO (Level 2)
+                                // Se usassemos baseMap.nextLevelPath aqui, pegariamos o Level 3!
+                                serverCurrentLevel = levelToLoad;
+
+                                // 4. Reset positions
+                                resetPlayersToSpawn(baseMap, players);
+
+                                // 5. Tell clients to load map
+                                int type = PACKET_CHANGE_LEVEL;
+                                int code = MSG_LOAD_MAP;
+                                int data[2] = { type, code };
+                                ENetPacket* p = enet_packet_create(data, sizeof(data), ENET_PACKET_FLAG_RELIABLE);
+                                enet_host_broadcast(netHost, 0, p);
+
+                                isTransitioning = false;
+                                doorClosed = false;
+                                transitionAlpha = 0.0f;
+                            }
+                            else {
+                                printf("[SERVER ERROR] Could not load map file: %s\n", levelToLoad.c_str());
+                                isTransitioning = false;
+                            }
                         }
                         else {
-                            // FIM DE JOGO
+                            // End Game
                             int type = PACKET_CHANGE_LEVEL;
                             int code = MSG_END_GAME;
                             int data[2] = { type, code };
                             ENetPacket* p = enet_packet_create(data, sizeof(data), ENET_PACKET_FLAG_RELIABLE);
                             enet_host_broadcast(netHost, 0, p);
-
-                            // Força o envio imediato antes de mudar o estado local
                             enet_host_flush(netHost);
 
                             currentState = STATE_ENDGAME;
@@ -217,7 +266,9 @@ int main() {
                 }
             }
 
-            // --- REDE (CORREÇÃO AQUI: Permite rede no STATE_ENDGAME) ---
+            // ==========================================
+            // LOGIC: NETWORK HANDLING
+            // ==========================================
             if (currentState == STATE_GAME || currentState == STATE_PAUSE || currentState == STATE_ENDGAME) {
                 if (netHost) {
                     ENetEvent netEvent;
@@ -225,31 +276,52 @@ int main() {
                         switch (netEvent.type) {
                         case ENET_EVENT_TYPE_CONNECT:
                             if (isServer && nextPlayerId < players.size()) {
+                                printf("[SERVER] New Player connected. Sending map: %s\n", serverCurrentLevel.c_str());
+
                                 WelcomePacket wpkt;
                                 wpkt.assignedId = nextPlayerId;
+
+                                // Clean memory and copy string
+                                memset(wpkt.currentMap, 0, 64);
+                                strncpy_s(wpkt.currentMap, sizeof(wpkt.currentMap), serverCurrentLevel.c_str(), 63);
+
                                 ENetPacket* packet = enet_packet_create(&wpkt, sizeof(WelcomePacket), ENET_PACKET_FLAG_RELIABLE);
                                 enet_peer_send(netEvent.peer, 0, packet);
                                 nextPlayerId++;
                             }
                             break;
+
                         case ENET_EVENT_TYPE_RECEIVE:
                             if (netEvent.packet->dataLength >= sizeof(int)) {
                                 int type = *(int*)netEvent.packet->data;
 
-                                if (!isServer) { // CLIENTE
+                                // --- CLIENT LOGIC ---
+                                if (!isServer) {
                                     if (type == PACKET_WELCOME) {
                                         WelcomePacket* pkt = (WelcomePacket*)netEvent.packet->data;
                                         myPlayerId = pkt->assignedId;
+
+                                        // *** FIX: HOT JOIN ***
+                                        printf("[CLIENT] Joined. Server Map: %s\n", pkt->currentMap);
+
+                                        // Attempt to load the map the server sent
+                                        if (baseMap.loadMapFromJson(pkt->currentMap)) {
+                                            printf("[CLIENT] Map loaded successfully!\n");
+                                            resetPlayersToSpawn(baseMap, players);
+                                        }
+                                        else {
+                                            printf("[CLIENT CRITICAL ERROR] Failed to load map: %s\n", pkt->currentMap);
+                                        }
                                     }
                                     else if (type == PACKET_STATE) {
                                         StatePacket* pkt = (StatePacket*)netEvent.packet->data;
-                                        if (pkt->id >= 0 && pkt->id < players.size()) {
+                                        if (pkt->id >= 0 && pkt->id < (int)players.size()) {
                                             players[pkt->id]->setNetworkState(pkt->x, pkt->y, pkt->current_frame_y, pkt->isMoving, pkt->isFinished);
                                         }
                                     }
                                     else if (type == PACKET_ENTITY_STATE) {
                                         StatePacket* pkt = (StatePacket*)netEvent.packet->data;
-                                        if (pkt->id >= 0 && pkt->id < baseMap.entities.size()) {
+                                        if (pkt->id >= 0 && pkt->id < (int)baseMap.entities.size()) {
                                             Car* car = (Car*)baseMap.entities[pkt->id];
                                             car->posX = (int)pkt->x; car->posY = (int)pkt->y;
                                             car->movingLeft = (pkt->current_frame_y == 1);
@@ -267,7 +339,9 @@ int main() {
 
                                             if (code == MSG_LOAD_MAP) {
                                                 if (!baseMap.nextLevelPath.empty()) {
+                                                    printf("[CLIENT] Changing level to: %s\n", baseMap.nextLevelPath.c_str());
                                                     baseMap.loadMapFromJson(baseMap.nextLevelPath);
+                                                    resetPlayersToSpawn(baseMap, players);
                                                     isTransitioning = false;
                                                     doorClosed = false;
                                                     transitionAlpha = 0.0f;
@@ -279,9 +353,10 @@ int main() {
                                         }
                                     }
                                 }
-                                else if (isServer && type == PACKET_INPUT) { // SERVIDOR
+                                // --- SERVER LOGIC ---
+                                else if (isServer && type == PACKET_INPUT) {
                                     InputPacket* pkt = (InputPacket*)netEvent.packet->data;
-                                    if (pkt->playerId >= 0 && pkt->playerId < players.size()) {
+                                    if (pkt->playerId >= 0 && pkt->playerId < (int)players.size()) {
                                         if (pkt->isDown) players[pkt->playerId]->keyDOWN(pkt->keycode);
                                         else players[pkt->playerId]->keyUP(pkt->keycode);
                                         players[pkt->playerId]->updateMovingState();
@@ -294,7 +369,7 @@ int main() {
                     }
                 }
 
-                // --- LÓGICA DO JOGO (SERVIDOR) ---
+                // --- GAMEPLAY LOGIC (SERVER ONLY) ---
                 if (currentState == STATE_GAME && !isTransitioning) {
                     if (isServer) {
                         int finishedCount = 0;
@@ -322,8 +397,8 @@ int main() {
                             enet_host_broadcast(netHost, 0, p);
                         }
 
-                        // Broadcast
-                        for (int i = 0; i < players.size(); i++) {
+                        // Broadcast Player States
+                        for (int i = 0; i < (int)players.size(); i++) {
                             StatePacket pkt; pkt.type = PACKET_STATE; pkt.id = i;
                             pkt.x = players[i]->posX; pkt.y = players[i]->posY;
                             pkt.current_frame_y = players[i]->current_frame_y; pkt.isMoving = players[i]->isMoving;
@@ -331,7 +406,8 @@ int main() {
                             ENetPacket* packet = enet_packet_create(&pkt, sizeof(StatePacket), ENET_PACKET_FLAG_UNSEQUENCED);
                             enet_host_broadcast(netHost, 0, packet);
                         }
-                        for (int i = 0; i < baseMap.entities.size(); i++) {
+                        // Broadcast Entities (Cars) States
+                        for (int i = 0; i < (int)baseMap.entities.size(); i++) {
                             Car* car = (Car*)baseMap.entities[i];
                             StatePacket pkt; pkt.type = PACKET_ENTITY_STATE; pkt.id = i;
                             pkt.x = car->posX; pkt.y = car->posY;
@@ -352,12 +428,14 @@ int main() {
             gameMouseY = (ev.mouse.y - scaleY) / scale;
         }
 
-        // --- INPUTS ---
+        // --- INPUT HANDLING ---
         if (currentState == STATE_MENU) {
             if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
                 if (btnHost.isOver(gameMouseX, gameMouseY)) {
                     if (startHost()) {
                         baseMap.loadMapFromJson("assets/maps/level1.json");
+                        serverCurrentLevel = "assets/maps/level1.json"; // Reset server map to Level 1
+
                         players.clear();
                         players.push_back(new Chicken()); players.push_back(new Bull());
                         players.push_back(new Pig()); players.push_back(new Sheep());
@@ -368,7 +446,9 @@ int main() {
                 }
                 else if (btnJoin.isOver(gameMouseX, gameMouseY)) {
                     if (startClient(inputIP)) {
+                        // Load Placeholder Map (Level 1) so we don't crash before network data arrives
                         baseMap.loadMapFromJson("assets/maps/level1.json");
+
                         players.clear();
                         players.push_back(new Chicken()); players.push_back(new Bull());
                         players.push_back(new Pig()); players.push_back(new Sheep());
@@ -391,7 +471,7 @@ int main() {
                 else {
                     bool isDown = true;
                     if (isServer) {
-                        if (myPlayerId >= 0) {
+                        if (myPlayerId >= 0 && myPlayerId < (int)players.size()) {
                             players[myPlayerId]->keyDOWN(ev.keyboard.keycode);
                             players[myPlayerId]->updateMovingState();
                         }
@@ -402,7 +482,7 @@ int main() {
             else if (ev.type == ALLEGRO_EVENT_KEY_UP) {
                 bool isDown = false;
                 if (isServer) {
-                    if (myPlayerId >= 0) {
+                    if (myPlayerId >= 0 && myPlayerId < (int)players.size()) {
                         players[myPlayerId]->keyUP(ev.keyboard.keycode);
                         players[myPlayerId]->updateMovingState();
                     }
@@ -429,7 +509,7 @@ int main() {
             }
         }
 
-        // --- DRAW ---
+        // --- DRAWING ---
         if (redraw && al_is_event_queue_empty(queue)) {
             redraw = false;
             al_clear_to_color(al_map_rgb(0, 0, 0));
@@ -453,6 +533,7 @@ int main() {
                 for (auto& p : players) p->draw();
 
                 if (fontSmall) al_draw_text(fontSmall, al_map_rgb(255, 255, 255), SCREENWIDTH - 10, 10, ALLEGRO_ALIGN_RIGHT, baseMap.title.c_str());
+
                 if (myPlayerId == -1) al_draw_text(font, al_map_rgb(255, 0, 0), 10, 10, 0, "CONECTANDO...");
                 else al_draw_textf(font, al_map_rgb(255, 255, 255), 10, 10, 0, "Player ID: %d", myPlayerId);
 
@@ -473,9 +554,11 @@ int main() {
             al_flip_display();
         }
     }
+
+    // --- CLEANUP ---
     disconnectNetwork();
     if (netHost) enet_host_destroy(netHost);
-    for (int i = 0; i < baseMap.tileNames.size(); i++) if (baseMap.tiles[i]) al_destroy_bitmap(baseMap.tiles[i]);
+    for (int i = 0; i < (int)baseMap.tileNames.size(); i++) if (baseMap.tiles[i]) al_destroy_bitmap(baseMap.tiles[i]);
     for (auto& e : baseMap.entities) { e->destroy(); delete e; }
     for (auto& p : players) { p->destroy(); delete p; }
     if (fontSmall) al_destroy_font(fontSmall);
@@ -483,5 +566,6 @@ int main() {
     al_destroy_font(font);
     al_destroy_timer(timer);
     al_destroy_event_queue(queue);
+
     return 0;
 }
