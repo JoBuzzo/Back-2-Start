@@ -59,16 +59,18 @@
   "entities": [
     {
       "type": "car",
-      "sprite": "assets/sprites/cars/perua.png",
+      "sprite": "assets/sprites/cars/animatedPerua.png",
       "posX": 19,
       "posY": 8,
       "speed": 2,
       "direction": "left",
-      "active": true
+      "active": true,
+      "animated": true,
+      "frameCount": 2
     },
     {
       "type": "car",
-      "sprite": "assets/sprites/cars/fuscaAnimated.png",
+      "sprite": "assets/sprites/cars/animatedFusca.png",
       "posX": 41,
       "posY": 8,
       "speed": 3,
@@ -79,7 +81,7 @@
     },
     {
       "type": "car",
-      "sprite": "assets/sprites/cars/fuscaAnimated.png",
+      "sprite": "assets/sprites/cars/animatedFusca.png",
       "posX": 28,
       "posY": 13,
       "speed": 2,
@@ -90,7 +92,7 @@
     },
     {
       "type": "car",
-      "sprite": "assets/sprites/cars/fuscaAnimated.png",
+      "sprite": "assets/sprites/cars/animatedFusca.png",
       "posX": 11,
       "posY": 18,
       "speed": 3,
@@ -101,7 +103,7 @@
     },
     {
       "type": "car",
-      "sprite": "assets/sprites/cars/fuscaAnimated.png",
+      "sprite": "assets/sprites/cars/animatedFusca.png",
       "posX": 25,
       "posY": 18,
       "speed": 2,
@@ -112,7 +114,7 @@
     },
     {
       "type": "car",
-      "sprite": "assets/sprites/cars/fuscaAnimated.png",
+      "sprite": "assets/sprites/cars/animatedFusca.png",
       "posX": 40,
       "posY": 18,
       "speed": 3,
