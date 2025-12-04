@@ -1,4 +1,5 @@
 #include "Pig.h"
+#include "ResourceManager.h"
 
 Pig::Pig() {
 	w = 32;
@@ -7,11 +8,10 @@ Pig::Pig() {
 	current_frame_y = 0;
 	posX = (WMAP * BLOCKSIZE / 2) - 16;
 	posY = HMAP * BLOCKSIZE - 64;
-	sprite = al_load_bitmap(urlSprite);
+	sprite = ResourceManager::get().getBitmap(urlSprite);
 }
 void Pig::reloadBitmap() {
-	if (sprite) al_destroy_bitmap(sprite);
-	sprite = al_load_bitmap(urlSprite);
+	sprite = ResourceManager::get().getBitmap(urlSprite);
 }
 
 void Pig::keyDOWN(int keycode) {

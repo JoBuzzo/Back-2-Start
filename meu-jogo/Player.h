@@ -21,10 +21,7 @@ public:
     }
 
     virtual ~Player() {
-        if (sprite) {
-            al_destroy_bitmap(sprite);
-            sprite = nullptr;
-        }
+        sprite = nullptr;
     }
 
     virtual void draw() {
@@ -59,10 +56,7 @@ public:
     }
 
     void destroy() {
-        if (sprite) {
-            al_destroy_bitmap(sprite);
-            sprite = nullptr;
-        }
+        sprite = nullptr;
     }
 
     void setNetworkState(float x, float y, int frameY, bool moving, bool finishedState) {

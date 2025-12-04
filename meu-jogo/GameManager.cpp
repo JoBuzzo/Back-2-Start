@@ -1,5 +1,6 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include "GameManager.h"
+#include "ResourceManager.h"
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_ttf.h>
@@ -76,8 +77,8 @@ bool GameManager::initAllegro() {
     al_translate_transform(&trans, scaleX, scaleY);
     al_use_transform(&trans);
 
-    font = al_load_font("assets/fonts/font.ttf", 25, 0);
-    fontSmall = al_load_font("assets/fonts/font.ttf", 18, 0);
+    font = ResourceManager::get().getFont("assets/fonts/font.ttf", 25);
+    fontSmall = ResourceManager::get().getFont("assets/fonts/font.ttf", 18);
 
     timer = al_create_timer(1.0 / 60.0);
     queue = al_create_event_queue();
@@ -92,14 +93,17 @@ bool GameManager::initAllegro() {
 }
 
 void GameManager::cleanup() {
-    net.shutdown(); // Usa o NetworkManager para limpar
+    net.shutdown();
+
     for (auto p : players) if (p) delete p;
     players.clear();
 
-    if (font) al_destroy_font(font);
-    if (fontSmall) al_destroy_font(fontSmall);
+
     if (timer) al_destroy_timer(timer);
     if (queue) al_destroy_event_queue(queue);
+
+    ResourceManager::get().clear();
+
     if (display) al_destroy_display(display);
 }
 

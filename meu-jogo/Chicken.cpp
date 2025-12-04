@@ -1,7 +1,5 @@
 #include "Chicken.h"
-#include "Config.h"
-#include <allegro5/allegro.h>
-#include <allegro5/allegro_image.h>
+#include "ResourceManager.h"
 
 Chicken::Chicken() {
     w = 32;
@@ -12,12 +10,11 @@ Chicken::Chicken() {
     posX = (WMAP * BLOCKSIZE / 2) - 16;
     posY = HMAP * BLOCKSIZE - 64;
 
-    sprite = al_load_bitmap(urlSprite);
+    sprite = ResourceManager::get().getBitmap(urlSprite);
 }
 
 void Chicken::reloadBitmap() {
-    if (sprite) al_destroy_bitmap(sprite);
-    sprite = al_load_bitmap(urlSprite);
+    sprite = ResourceManager::get().getBitmap(urlSprite);
 }
 
 void Chicken::keyDOWN(int keycode) {

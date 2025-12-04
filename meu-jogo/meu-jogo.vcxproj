@@ -233,6 +233,7 @@
     <ClInclude Include="Pig.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="Sheep.h" />
     <ClInclude Include="Turkey.h" />
   </ItemGroup>

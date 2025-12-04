@@ -2,6 +2,7 @@
 #include <fstream>
 #include <algorithm>
 #include <nlohmann/json.hpp>
+#include "ResourceManager.h" // <--- 1. IMPORTANTE: Incluir o Gerenciador
 
 using json = nlohmann::json;
 
@@ -17,10 +18,18 @@ BaseMap::BaseMap() {
 }
 
 BaseMap::~BaseMap() {
-    if (busSheet) al_destroy_bitmap(busSheet);
-    for (int i = 0; i < 20; i++) {
-        if (tiles[i]) al_destroy_bitmap(tiles[i]);
-    }
+    // --- 2. MUDANÇA: NÃO DESTRUIR ASSETS GLOBAIS ---
+    // Como usamos o ResourceManager, não damos destroy no busSheet nem nos tiles aqui.
+    // O ResourceManager limpará tudo quando o jogo fechar.
+
+    // if (busSheet) al_destroy_bitmap(busSheet); <--- REMOVIDO
+
+    // for (int i = 0; i < 20; i++) {
+    //    if (tiles[i]) al_destroy_bitmap(tiles[i]); <--- REMOVIDO
+    // }
+
+    // Entidades (Carros) ainda são objetos únicos dessa fase, então deletamos os OBJETOS
+    // (Mas atenção: dentro de Car::destroy, não destrua o sprite se ele vier do ResourceManager)
     for (auto e : entities) {
         if (e) { e->destroy(); delete e; }
     }
@@ -63,23 +72,32 @@ bool BaseMap::loadMapFromJson(const std::string& jsonPath) {
         checkpoint.x = j["checkpoint"]["x"].get<int>() * BLOCKSIZE;
         checkpoint.y = j["checkpoint"]["y"].get<int>() * BLOCKSIZE;
 
-        if (!busSheet) {
-            busSheet = al_load_bitmap("assets/sprites/cars/bus.png");
-            if (busSheet) {
-                busFrameW = al_get_bitmap_width(busSheet) / 2;
-                busFrameH = al_get_bitmap_height(busSheet);
-            }
-            else {
-                printf("[ERRO VISUAL] Nao achei a imagem do onibus!\n");
-            }
+        // --- 3. MUDANÇA: USANDO RESOURCE MANAGER ---
+        // Não carregamos do disco. Pedimos ao gerente.
+        // Se já estiver carregado, é instantâneo.
+        busSheet = ResourceManager::get().getBitmap("assets/sprites/cars/bus.png");
+
+        if (busSheet) {
+            busFrameW = al_get_bitmap_width(busSheet) / 2;
+            busFrameH = al_get_bitmap_height(busSheet);
+        }
+        else {
+            printf("[ERRO VISUAL] Nao achei a imagem do onibus!\n");
         }
     }
 
     if (j.contains("tiles")) {
         tileNames = j["tiles"].get<std::vector<std::string>>();
         for (size_t i = 0; i < tileNames.size(); i++) {
-            if (tiles[i]) al_destroy_bitmap(tiles[i]);
-            tiles[i] = al_load_bitmap(tileNames[i].c_str());
+            // Não precisamos destruir o anterior, pois é apenas um ponteiro compartilhado.
+            // Apenas sobrescrevemos o ponteiro com o novo endereço.
+
+            // --- 3. MUDANÇA: USANDO RESOURCE MANAGER ---
+            tiles[i] = ResourceManager::get().getBitmap(tileNames[i]);
+
+            if (!tiles[i]) {
+                printf("[ERRO] Falha ao carregar tile: %s\n", tileNames[i].c_str());
+            }
         }
     }
 

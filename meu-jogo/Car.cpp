@@ -1,6 +1,7 @@
 #include "Car.h"
 #include <cstdio>
 #include <vector>
+#include "ResourceManager.h"
 
 Car::Car()
     : sprite(nullptr), spritePath("test.png"), w(0), h(64), posX(0), posY(0),
@@ -44,15 +45,13 @@ void Car::draw() {
 }
 
 void Car::destroy() {
+
     for (auto f : frames) {
         al_destroy_bitmap(f);
     }
     frames.clear();
 
-    if (sprite) {
-        al_destroy_bitmap(sprite);
-        sprite = nullptr;
-    }
+    sprite = nullptr;
 }
 
 void Car::move() {
@@ -115,10 +114,9 @@ bool Car::checkCollision(std::vector<Player*>& players) {
 void Car::reloadBitMap() {
     destroy();
 
-    sprite = al_load_bitmap(spritePath.c_str());
+    sprite = ResourceManager::get().getBitmap(spritePath);
 
     if (!sprite) {
-        printf("[ERRO] Carro sem imagem: %s\n", spritePath.c_str());
         return;
     }
 
@@ -128,7 +126,6 @@ void Car::reloadBitMap() {
     if (frameCount < 1) frameCount = 1;
 
     h = totalHeight;
-
     w = totalWidth / frameCount;
 
     for (int i = 0; i < frameCount; i++) {
