@@ -59,201 +59,67 @@
   "entities": [
     {
       "type": "car",
-      "sprite": "assets/sprites/cars/van.png",
-      "posX": 2,
-      "posY": 8,
-      "w": 120,
-      "h": 64,
-      "speed": 2,
-      "direction": "left",
-      "active": true
-    },
-    {
-      "type": "car",
       "sprite": "assets/sprites/cars/perua.png",
       "posX": 19,
       "posY": 8,
-      "w": 128,
-      "h": 64,
       "speed": 2,
       "direction": "left",
       "active": true
     },
     {
       "type": "car",
-      "sprite": "assets/sprites/cars/dodgeRAM.png",
-      "posX": 27,
-      "posY": 8,
-      "w": 160,
-      "h": 64,
-      "speed": 4,
-      "direction": "left",
-      "active": true
-    },
-    {
-      "type": "car",
-      "sprite": "assets/sprites/cars/fusca.png",
+      "sprite": "assets/sprites/cars/fuscaAnimated.png",
       "posX": 41,
       "posY": 8,
-      "w": 96,
-      "h": 64,
       "speed": 3,
       "direction": "left",
-      "active": true
+      "active": true,
+      "animated": true,
+      "frameCount": 2
     },
     {
       "type": "car",
-      "sprite": "assets/sprites/cars/dodgeRAM.png",
-      "posX": 50,
-      "posY": 8,
-      "w": 160,
-      "h": 64,
-      "speed": 4,
-      "direction": "left",
-      "active": true
-    },
-    {
-      "type": "car",
-      "sprite": "assets/sprites/cars/van.png",
-      "posX": 3,
-      "posY": 13,
-      "w": 120,
-      "h": 64,
-      "speed": 3,
-      "direction": "left",
-      "active": true
-    },
-    {
-      "type": "car",
-      "sprite": "assets/sprites/cars/van.png",
-      "posX": 20,
-      "posY": 13,
-      "w": 120,
-      "h": 64,
-      "speed": 3,
-      "direction": "left",
-      "active": true
-    },
-    {
-      "type": "car",
-      "sprite": "assets/sprites/cars/fusca.png",
+      "sprite": "assets/sprites/cars/fuscaAnimated.png",
       "posX": 28,
       "posY": 13,
-      "w": 96,
-      "h": 64,
       "speed": 2,
       "direction": "left",
-      "active": true
+      "active": true,
+      "animated": true,
+      "frameCount": 2
     },
     {
       "type": "car",
-      "sprite": "assets/sprites/cars/van.png",
-      "posX": 36,
-      "posY": 13,
-      "w": 120,
-      "h": 64,
-      "speed": 3,
-      "direction": "left",
-      "active": true
-    },
-    {
-      "type": "car",
-      "sprite": "assets/sprites/cars/dodgeRAM.png",
-      "posX": 45,
-      "posY": 13,
-      "w": 160,
-      "h": 64,
-      "speed": 3,
-      "direction": "left",
-      "active": true
-    },
-    {
-      "type": "car",
-      "sprite": "assets/sprites/cars/van.png",
-      "posX": 1,
-      "posY": 18,
-      "w": 120,
-      "h": 64,
-      "speed": 3,
-      "direction": "left",
-      "active": true
-    },
-    {
-      "type": "car",
-      "sprite": "assets/sprites/cars/fusca.png",
+      "sprite": "assets/sprites/cars/fuscaAnimated.png",
       "posX": 11,
       "posY": 18,
-      "w": 96,
-      "h": 64,
       "speed": 3,
       "direction": "left",
-      "active": true
+      "active": true,
+      "animated": true,
+      "frameCount": 2
     },
     {
       "type": "car",
-      "sprite": "assets/sprites/cars/fusca.png",
+      "sprite": "assets/sprites/cars/fuscaAnimated.png",
       "posX": 25,
       "posY": 18,
-      "w": 96,
-      "h": 64,
       "speed": 2,
       "direction": "left",
-      "active": true
+      "active": true,
+      "animated": true,
+      "frameCount": 2
     },
     {
       "type": "car",
-      "sprite": "assets/sprites/cars/fusca.png",
+      "sprite": "assets/sprites/cars/fuscaAnimated.png",
       "posX": 40,
       "posY": 18,
-      "w": 96,
-      "h": 64,
       "speed": 3,
       "direction": "left",
-      "active": true
-    },
-    {
-      "type": "car",
-      "sprite": "assets/sprites/cars/dodgeRAM.png",
-      "posX": 5,
-      "posY": 23,
-      "w": 160,
-      "h": 64,
-      "speed": 4,
-      "direction": "left",
-      "active": true
-    },
-    {
-      "type": "car",
-      "sprite": "assets/sprites/cars/van.png",
-      "posX": 15,
-      "posY": 23,
-      "w": 120,
-      "h": 64,
-      "speed": 2,
-      "direction": "left",
-      "active": true
-    },
-    {
-      "type": "car",
-      "sprite": "assets/sprites/cars/dodgeRAM.png",
-      "posX": 28,
-      "posY": 23,
-      "w": 160,
-      "h": 64,
-      "speed": 3,
-      "direction": "left",
-      "active": true
-    },
-    {
-      "type": "car",
-      "sprite": "assets/sprites/cars/dodgeRAM.png",
-      "posX": 43,
-      "posY": 23,
-      "w": 160,
-      "h": 64,
-      "speed": 3,
-      "direction": "left",
-      "active": true
+      "active": true,
+      "animated": true,
+      "frameCount": 2
     }
   ]
 }

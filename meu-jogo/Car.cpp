@@ -3,7 +3,9 @@
 #include <vector>
 
 Car::Car()
-    : sprite(nullptr), spritePath("test.png"), w(0), h(64), posX(0), posY(0), speed(0), movingLeft(false), active(false)
+    : sprite(nullptr), spritePath("test.png"), w(0), h(64), posX(0), posY(0),
+    speed(0), movingLeft(false), active(false),
+    animated(false), frameCount(1), currentFrame(0.0f)
 {
 }
 
@@ -22,17 +24,31 @@ void Car::setDirection() {
 }
 
 void Car::draw() {
-    if (!active) return;
+    if (!active || frames.empty()) return;
+
+    if (animated) {
+        currentFrame += 0.1f;
+        if (currentFrame >= frameCount) currentFrame -= frameCount;
+    }
+
+    int index = (int)currentFrame;
+    if (index >= frames.size()) index = 0;
+    ALLEGRO_BITMAP* currentSprite = frames[index];
 
     if (movingLeft) {
-        al_draw_bitmap(sprite, posX, posY, ALLEGRO_FLIP_HORIZONTAL);
+        al_draw_bitmap(currentSprite, posX, posY, 0);
     }
     else {
-        al_draw_bitmap(sprite, posX, posY, 0);
+        al_draw_bitmap(currentSprite, posX, posY, ALLEGRO_FLIP_HORIZONTAL);
     }
 }
 
 void Car::destroy() {
+    for (auto f : frames) {
+        al_destroy_bitmap(f);
+    }
+    frames.clear();
+
     if (sprite) {
         al_destroy_bitmap(sprite);
         sprite = nullptr;
@@ -42,15 +58,25 @@ void Car::destroy() {
 void Car::move() {
     if (!active) return;
 
-    posX += speed;
+    float moveSpeed = std::abs(speed);
 
-    if (posX > WMAP * BLOCKSIZE) {
-        posX = -w;
+    if (movingLeft) {
+        posX -= moveSpeed;
     }
-    else if (posX + w < 0) {
-        posX = WMAP * BLOCKSIZE;
+    else {
+        posX += moveSpeed;
     }
-    
+
+    if (movingLeft) {
+        if (posX + w < 0) {
+            posX = WMAP * BLOCKSIZE;
+        }
+    }
+    else {
+        if (posX > WMAP * BLOCKSIZE) {
+            posX = -w;
+        }
+    }
 }
 
 bool Car::collide(Player& player) {
@@ -96,5 +122,28 @@ void Car::collide(std::vector<Player*>& players) {
 }
 
 void Car::reloadBitMap() {
+    destroy();
+
     sprite = al_load_bitmap(spritePath.c_str());
+
+    if (!sprite) {
+        printf("[ERRO] Carro sem imagem: %s\n", spritePath.c_str());
+        return;
+    }
+
+    int totalWidth = al_get_bitmap_width(sprite);
+    int totalHeight = al_get_bitmap_height(sprite);
+
+    if (frameCount < 1) frameCount = 1;
+
+    h = totalHeight;
+
+    w = totalWidth / frameCount;
+
+    for (int i = 0; i < frameCount; i++) {
+        ALLEGRO_BITMAP* sub = al_create_sub_bitmap(sprite, i * w, 0, w, h);
+        if (sub) {
+            frames.push_back(sub);
+        }
+    }
 }

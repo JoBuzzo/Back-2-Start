@@ -77,10 +77,18 @@ bool BaseMap::loadMapFromJson(const std::string& jsonPath) {
                 else
                     car->spritePath = "assets/sprites/cars/fusca.png";
 
+                if (e.contains("animated"))
+                    car->animated = e["animated"].get<bool>();
+                else
+                    car->animated = false;
+
+                if (e.contains("frameCount"))
+                    car->frameCount = e["frameCount"].get<int>();
+                else
+                    car->frameCount = 1;
+
                 car->setPosX(e["posX"].get<int>());
                 car->setPosY(e["posY"].get<int>());
-                car->w = e["w"].get<int>();
-                car->h = e["h"].get<int>();
                 car->speed = e["speed"].get<float>();
                 car->active = e["active"].get<bool>();
 
