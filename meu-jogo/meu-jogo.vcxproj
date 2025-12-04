@@ -212,7 +212,9 @@
     <ClCompile Include="Bull.cpp" />
     <ClCompile Include="Car.cpp" />
     <ClCompile Include="Chicken.cpp" />
+    <ClCompile Include="GameManager.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="NetworkManager.cpp" />
     <ClCompile Include="Pig.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Sheep.cpp" />
@@ -224,7 +226,9 @@
     <ClInclude Include="Car.h" />
     <ClInclude Include="Chicken.h" />
     <ClInclude Include="Config.h" />
+    <ClInclude Include="GameManager.h" />
     <ClInclude Include="Menu.h" />
+    <ClInclude Include="NetworkManager.h" />
     <ClInclude Include="NetworkProtocol.h" />
     <ClInclude Include="Pig.h" />
     <ClInclude Include="Player.h" />

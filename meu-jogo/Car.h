@@ -35,7 +35,7 @@ public:
     virtual void move();
 
     virtual bool collide(Player& player);
-    virtual void collide(std::vector<Player*>& players);
+    virtual bool checkCollision(std::vector<Player*>& players);
 
     virtual void reloadBitMap();
 };

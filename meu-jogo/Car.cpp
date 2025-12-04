@@ -94,31 +94,22 @@ bool Car::collide(Player& player) {
 
     if (carLeft < playerRight && carRight > playerLeft &&
         carTop < playerBottom && carBottom > playerTop)
-    {
-        player.posX = (WMAP * BLOCKSIZE / 2) - 16;
-        player.posY = HMAP * BLOCKSIZE - 64;
-        
+    {        
         return true;
     }
 
     return false;
 }
 
-void Car::collide(std::vector<Player*>& players) {
-    if (!active) return;
-
-    bool anyCollide = false;
+bool Car::checkCollision(std::vector<Player*>& players) {
+    if (!active) return false;
 
     for (auto& player : players) {
-        if (collide(*player)){
-            anyCollide = true;
+        if (collide(*player)) {
+            return true;
         }
     }
-    if (anyCollide) {
-        for (auto& player : players) {
-            player->resetPos();
-        }
-    }
+    return false;
 }
 
 void Car::reloadBitMap() {

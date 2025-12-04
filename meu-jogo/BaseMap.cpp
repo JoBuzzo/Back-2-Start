@@ -1,11 +1,34 @@
 #include "BaseMap.h"
 #include <fstream>
-#include <iostream>
+#include <algorithm>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
 
+BaseMap::BaseMap() {
+    busSheet = nullptr;
+    busFrameW = 0;
+    busFrameH = 0;
+    isLoaded = false;
+
+    for (int i = 0; i < HMAP; i++)
+        for (int j = 0; j < WMAP; j++)
+            map[i][j] = 0;
+}
+
+BaseMap::~BaseMap() {
+    if (busSheet) al_destroy_bitmap(busSheet);
+    for (int i = 0; i < 20; i++) {
+        if (tiles[i]) al_destroy_bitmap(tiles[i]);
+    }
+    for (auto e : entities) {
+        if (e) { e->destroy(); delete e; }
+    }
+}
+
 bool BaseMap::loadMapFromJson(const std::string& jsonPath) {
+    isLoaded = false;
+
     path = jsonPath;
     std::ifstream file(path);
     if (!file.is_open()) {
@@ -23,23 +46,18 @@ bool BaseMap::loadMapFromJson(const std::string& jsonPath) {
     }
 
     for (auto e : entities) {
-        if (e) {
-            e->destroy();
-            delete e;
-        }
+        if (e) { e->destroy(); delete e; }
     }
     entities.clear();
 
-
+    // Leitura dos campos
     if (j.contains("title") && !j["title"].is_null())
         title = j["title"].get<std::string>();
-    else
-        title = "";
+    else title = "";
 
     if (j.contains("nextLevel") && !j["nextLevel"].is_null())
         nextLevelPath = j["nextLevel"].get<std::string>();
-    else
-        nextLevelPath = "";
+    else nextLevelPath = "";
 
     if (j.contains("checkpoint")) {
         checkpoint.x = j["checkpoint"]["x"].get<int>() * BLOCKSIZE;
@@ -52,7 +70,7 @@ bool BaseMap::loadMapFromJson(const std::string& jsonPath) {
                 busFrameH = al_get_bitmap_height(busSheet);
             }
             else {
-                printf("[AVISO] Imagem 'assets/sprites/cars/bus.png' nao encontrada!\n");
+                printf("[ERRO VISUAL] Nao achei a imagem do onibus!\n");
             }
         }
     }
@@ -62,7 +80,6 @@ bool BaseMap::loadMapFromJson(const std::string& jsonPath) {
         for (size_t i = 0; i < tileNames.size(); i++) {
             if (tiles[i]) al_destroy_bitmap(tiles[i]);
             tiles[i] = al_load_bitmap(tileNames[i].c_str());
-            if (!tiles[i]) printf("[ERRO] Tile nao encontrado: %s\n", tileNames[i].c_str());
         }
     }
 
@@ -71,33 +88,23 @@ bool BaseMap::loadMapFromJson(const std::string& jsonPath) {
             std::string type = e["type"];
             if (type == "car") {
                 Car* car = new Car();
-
-                if (e.contains("sprite") && !e["sprite"].is_null())
-                    car->spritePath = e["sprite"].get<std::string>();
-                else
-                    car->spritePath = "assets/sprites/cars/fusca.png";
-
-                if (e.contains("animated"))
-                    car->animated = e["animated"].get<bool>();
-                else
-                    car->animated = false;
-
-                if (e.contains("frameCount"))
-                    car->frameCount = e["frameCount"].get<int>();
-                else
-                    car->frameCount = 1;
+                if (e.contains("sprite")) car->spritePath = e["sprite"].get<std::string>();
 
                 car->setPosX(e["posX"].get<int>());
                 car->setPosY(e["posY"].get<int>());
+
                 car->speed = e["speed"].get<float>();
                 car->active = e["active"].get<bool>();
+
+                if (e.contains("frameCount")) car->frameCount = e["frameCount"].get<int>();
+                else car->frameCount = 1;
+
+                if (e.contains("animated")) car->animated = e["animated"].get<bool>();
 
                 std::string dir = e["direction"].get<std::string>();
                 car->movingLeft = (dir == "left");
 
                 car->reloadBitMap();
-                if (!car->sprite) printf("[ERRO] Sprite falhou: %s\n", car->spritePath.c_str());
-
                 entities.push_back(car);
             }
         }
@@ -114,21 +121,22 @@ bool BaseMap::loadMapFromJson(const std::string& jsonPath) {
         auto mapData = j["map"];
         int rows = std::min((int)mapData.size(), HMAP);
         int cols = std::min((int)mapData[0].size(), WMAP);
-
         for (int i = 0; i < rows; i++)
             for (int j = 0; j < cols; j++)
                 map[i][j] = mapData[i][j];
     }
 
+    isLoaded = true;
     return true;
 }
 
-
 void BaseMap::drawMap() {
+    if (!isLoaded) return;
+
     for (int i = 0; i < HMAP; i++) {
         for (int j = 0; j < WMAP; j++) {
             int tileIndex = map[i][j];
-            if (tileIndex >= 0 && tileIndex < tileNames.size() && tiles[tileIndex] != nullptr) {
+            if (tileIndex >= 0 && tileIndex < (int)tileNames.size() && tiles[tileIndex]) {
                 al_draw_bitmap(tiles[tileIndex], j * BLOCKSIZE, i * BLOCKSIZE, 0);
             }
         }
@@ -136,17 +144,17 @@ void BaseMap::drawMap() {
 }
 
 void BaseMap::drawBus(bool isDoorClosed) {
-    if (busSheet) {
+    if (busSheet && isLoaded) {
         int srcX = isDoorClosed ? busFrameW : 0;
         al_draw_bitmap_region(busSheet, srcX, 0, busFrameW, busFrameH, checkpoint.x, checkpoint.y, 0);
     }
 }
 
 bool BaseMap::checkBusCollision(int px, int py, int pw, int ph) {
+    if (!isLoaded) return false;
     int bx = checkpoint.x;
     int by = checkpoint.y;
     int bw = busFrameW;
     int bh = busFrameH;
-
     return (px < bx + bw && px + pw > bx && py < by + bh && py + ph > by);
 }

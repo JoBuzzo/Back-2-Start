@@ -1,7 +1,4 @@
-#ifndef NETWORKPROTOCOL_H
-#define NETWORKPROTOCOL_H
-
-#include <cstring>
+#pragma once
 
 enum PacketType {
     PACKET_INPUT,
@@ -14,25 +11,27 @@ enum PacketType {
 
 struct InputPacket {
     int type = PACKET_INPUT;
-    int playerId;
-    int keycode;
-    bool isDown;
+    int playerId = -1;
+    int keycode = 0;
+    bool isDown = false;
 };
 
 struct StatePacket {
     int type = PACKET_STATE;
-    int id;
-    float x;
-    float y;
-    int current_frame_y;
-    bool isMoving;
-    bool isFinished;
+    int id = -1;
+    float x = 0.0f;
+    float y = 0.0f;
+    int current_frame_y = 0;
+    bool isMoving = false;
+    bool isFinished = false;
 };
 
 struct WelcomePacket {
     int type = PACKET_WELCOME;
-    int assignedId;
-    char currentMap[64];
+    int assignedId = -1;
+    char currentLevelPath[128] = { 0 };
 };
 
-#endif
+struct PacketHeader {
+    int type;
+};
