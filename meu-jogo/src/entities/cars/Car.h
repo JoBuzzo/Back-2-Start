@@ -3,8 +3,8 @@
 #include <allegro5/allegro_image.h>
 #include <string>
 #include <vector>
-#include "Player.h"
-#include "Config.h"
+#include "src/entities/players/Player.h"
+#include "src/core/Config.h"
 
 class Car {
 public:

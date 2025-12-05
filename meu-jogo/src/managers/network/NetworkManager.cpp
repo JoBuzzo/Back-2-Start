@@ -1,4 +1,4 @@
-#include "NetworkManager.h"
+#include "src/managers/network/NetworkManager.h"
 #include <iostream>
 #include <cstring>
 

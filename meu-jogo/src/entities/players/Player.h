@@ -1,6 +1,9 @@
 #pragma once
-#include "Config.h"
+#include "src/core/Config.h"
 #include <allegro5/allegro.h>
+
+const float GRAVITY = 0.25f;
+const float JUMP_FORCE = 5.0f;
 
 class Player {
 public:

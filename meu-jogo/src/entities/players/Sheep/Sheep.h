@@ -1,9 +1,9 @@
 #pragma once
-#include "Player.h"
-class Pig : public Player{
-	public:
-	char urlSprite[100] = "assets/sprites/players/pig.png";
-	Pig();
+#include "src/entities/players/Player.h"
+class Sheep : public Player{
+public:
+	char urlSprite[100] = "assets/sprites/players/sheep.png";
+	Sheep();
 	void reloadBitmap();
 	void keyDOWN(int keycode) override;
 	void keyUP(int keycode) override;

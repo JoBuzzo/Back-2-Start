@@ -1,5 +1,5 @@
-#include "Chicken.h"
-#include "ResourceManager.h"
+#include "src/entities/players/Chicken/Chicken.h"
+#include "src/managers/resource/ResourceManager.h"
 
 Chicken::Chicken() {
     w = 32;

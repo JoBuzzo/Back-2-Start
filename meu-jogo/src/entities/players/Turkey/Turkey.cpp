@@ -1,5 +1,5 @@
-#include "Turkey.h"
-#include "ResourceManager.h"
+#include "src/entities/players/Turkey/Turkey.h"
+#include "src/managers/resource/ResourceManager.h"
 
 Turkey::Turkey() {
 	w = 32;

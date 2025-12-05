@@ -1,5 +1,5 @@
 #pragma once
-#include "Player.h"
+#include "src/entities/players/Player.h"
 class Bull : public Player {
 public:
 	char urlSprite[100] = "assets/sprites/players/bull.png";

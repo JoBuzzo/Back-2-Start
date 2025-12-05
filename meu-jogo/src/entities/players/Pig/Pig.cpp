@@ -1,5 +1,5 @@
-#include "Pig.h"
-#include "ResourceManager.h"
+#include "src/entities/players/Pig/Pig.h"
+#include "src/managers/resource/ResourceManager.h"
 
 Pig::Pig() {
 	w = 32;

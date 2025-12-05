@@ -13,18 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Arquivos de Cabeçalho\entities">
-      <UniqueIdentifier>{af27f4a8-106f-4d3b-bff5-00b286dac125}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Arquivos de Cabeçalho\entities\cars">
-      <UniqueIdentifier>{2cdabf5a-27f1-4c75-82fb-94497aba2152}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Arquivos de Cabeçalho\entities\players">
-      <UniqueIdentifier>{17a3859a-d561-45f6-9896-db1ff3d5492d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Arquivos de Cabeçalho\Maps">
-      <UniqueIdentifier>{d84e3cb7-e1d8-49ef-a448-e49a9328c500}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -63,53 +51,6 @@
     <ClCompile Include="NetworkManager.cpp">
       <Filter>Arquivos de Origem</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Car.h">
-      <Filter>Arquivos de Cabeçalho\entities\cars</Filter>
-    </ClInclude>
-    <ClInclude Include="Player.h">
-      <Filter>Arquivos de Cabeçalho\entities\players</Filter>
-    </ClInclude>
-    <ClInclude Include="BaseMap.h">
-      <Filter>Arquivos de Cabeçalho\Maps</Filter>
-    </ClInclude>
-    <ClInclude Include="Config.h">
-      <Filter>Arquivos de Cabeçalho</Filter>
-    </ClInclude>
-    <ClInclude Include="Chicken.h">
-      <Filter>Arquivos de Cabeçalho\entities\players</Filter>
-    </ClInclude>
-    <ClInclude Include="Turkey.h">
-      <Filter>Arquivos de Cabeçalho\entities\players</Filter>
-    </ClInclude>
-    <ClInclude Include="Sheep.h">
-      <Filter>Arquivos de Cabeçalho\entities\players</Filter>
-    </ClInclude>
-    <ClInclude Include="Bull.h">
-      <Filter>Arquivos de Cabeçalho\entities\players</Filter>
-    </ClInclude>
-    <ClInclude Include="Pig.h">
-      <Filter>Arquivos de Cabeçalho\entities\players</Filter>
-    </ClInclude>
-    <ClInclude Include="NetworkProtocol.h">
-      <Filter>Arquivos de Cabeçalho</Filter>
-    </ClInclude>
-    <ClInclude Include="Menu.h">
-      <Filter>Arquivos de Cabeçalho</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>Arquivos de Cabeçalho</Filter>
-    </ClInclude>
-    <ClInclude Include="GameManager.h">
-      <Filter>Arquivos de Cabeçalho</Filter>
-    </ClInclude>
-    <ClInclude Include="NetworkManager.h">
-      <Filter>Arquivos de Cabeçalho</Filter>
-    </ClInclude>
-    <ClInclude Include="ResourceManager.h">
-      <Filter>Arquivos de Cabeçalho</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="meu-jogo.rc">

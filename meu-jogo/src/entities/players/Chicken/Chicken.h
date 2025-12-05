@@ -1,5 +1,5 @@
 #pragma once
-#include "Player.h"
+#include "src/entities/players/Player.h"
 #include <allegro5/allegro_image.h>
 #include <cstring>
 

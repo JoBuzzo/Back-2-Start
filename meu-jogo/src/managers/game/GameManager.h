@@ -1,10 +1,9 @@
 #pragma once
 #include <allegro5/allegro_font.h>
 
-// Nossas classes de gerenciamento
-#include "NetworkManager.h"
-#include "BaseMap.h"
-#include "Player.h"
+#include "src/managers/network/NetworkManager.h"
+#include "src/levels/Level.h"
+#include "src/entities/players/Player.h"
 
 #include <vector>
 #include <string>
@@ -42,25 +41,25 @@ private:
     NetworkManager net;
     std::string inputIP;
 
-    // --- Transição ---
+    // --- Transicao ---
     bool isTransitioning;
     float transitionAlpha;
     bool doorClosed;
 
     // --- Jogo ---
-    BaseMap baseMap;
+    Level level;
     std::vector<Player*> players;
 
     // --- UI ---
     Button btnHost, btnJoin, btnExit, btnResume, btnQuit;
 
-    // --- Métodos ---
+    // --- Metodos ---
     bool initAllegro();
     void cleanup();
 
     void resetPlayersToSpawn();
     void broadcastState();
-    void updateGameLogic();    // Lógica do Servidor
+    void updateGameLogic();    // Logica do Servidor
     void processNetwork();     // Callbacks da Rede
     void handleInput(ALLEGRO_EVENT& ev);
     void draw();
