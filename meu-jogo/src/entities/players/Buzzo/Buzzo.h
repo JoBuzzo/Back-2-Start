@@ -26,4 +26,5 @@ public:
     void draw() override; 
     void keyDOWN(int keycode) override;
     void keyUP(int keycode) override;
+    void getHitbox(int& x, int& y, int& w, int& h) override;
 };

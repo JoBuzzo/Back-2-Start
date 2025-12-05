@@ -81,15 +81,19 @@ void Car::move() {
 bool Car::collide(Player& player) {
     if (!active) return false;
 
-    int carLeft = posX + 16;
-    int carRight = posX + w - 16;
-    int carTop = posY + 16;
+    int carLeft   = posX + 16;
+    int carRight  = posX + w - 16;
+    int carTop    = posY + 16;
     int carBottom = posY + h - 16;
 
-    int playerLeft = player.posX;
-    int playerRight = player.posX + 32;
-    int playerTop = player.posY;
-    int playerBottom = player.posY + 32;
+    int pX, pY, pW, pH;
+    player.getHitbox(pX, pY, pW, pH);
+
+    int playerLeft   = pX;
+    int playerRight  = pX + pW;
+    int playerTop    = pY;
+    int playerBottom = pY + pH;
+
 
     if (carLeft < playerRight && carRight > playerLeft &&
         carTop < playerBottom && carBottom > playerTop)

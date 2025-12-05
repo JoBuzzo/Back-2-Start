@@ -149,4 +149,13 @@ void Buzzo::draw() {
             w, h,
             posX, posY - (int)z, 0);
     }
+
+}
+
+void Buzzo::getHitbox(int& x, int& y, int& w, int& h) {
+
+    x = posX + 16; 
+    y = posY + 32;
+    w = 32;
+    h = 32;
 }

@@ -26,6 +26,13 @@ public:
     virtual ~Player() {
         sprite = nullptr;
     }
+    
+    virtual void getHitbox(int& x, int& y, int& w, int& h) {
+        x = posX;
+        y = posY;
+        w = this->w;
+        h = this->h;
+    }
 
     virtual void draw() {
         if (finished) return;

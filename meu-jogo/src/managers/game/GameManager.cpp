@@ -256,8 +256,11 @@ void GameManager::updateGameLogic() {
         players[i]->move();
         players[i]->updateMovingState();
 
+        int hx, hy, hw, hh;
+        players[i]->getHitbox(hx, hy, hw, hh);
+
         if (!players[i]->finished) {
-            if (level.checkBusCollision(players[i]->posX, players[i]->posY, 32, 32))
+            if (level.checkBusCollision(hx, hy, hw, hh))
                 players[i]->finished = true;
         }
         else finishedCount++;
