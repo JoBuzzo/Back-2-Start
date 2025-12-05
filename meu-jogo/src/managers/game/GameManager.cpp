@@ -1,22 +1,22 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
-#include "GameManager.h"
-#include "ResourceManager.h"
+#include "src/managers/game/GameManager.h"
+#include "src/managers/resource/ResourceManager.h"
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_ttf.h>
 #include <cstdio>
 
 // Include dos bichos
-#include "Bull.h"
-#include "Chicken.h"
-#include "Pig.h"
-#include "Sheep.h"
-#include "Turkey.h"
+#include "src/entities/players/Bull/Bull.h"
+#include "src/entities/players/Buzzo/Buzzo.h"
+#include "src/entities/players/Chicken/Chicken.h"
+#include "src/entities/players/Pig/Pig.h"
+#include "src/entities/players/Sheep/Sheep.h"
+#include "src/entities/players/Turkey/Turkey.h"
 
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "winmm.lib")
 
-// --- Implementação do Button ---
 bool Button::isOver(float mx, float my) {
     return (mx >= x && mx <= x + w && my >= y && my <= y + h);
 }
@@ -108,7 +108,7 @@ void GameManager::cleanup() {
 }
 
 void GameManager::run() {
-    if (!net.init()) return; // Init do NetworkManager
+    if (!net.init()) return;
     if (!initAllegro()) return;
 
     while (running) {
@@ -118,14 +118,14 @@ void GameManager::run() {
         if (ev.type == ALLEGRO_EVENT_TIMER) {
             redraw = true;
 
-            // --- Lógica de Transição ---
+            // --- Logica de Transicao ---
             if (isTransitioning) {
                 transitionAlpha += 0.02f;
                 if (transitionAlpha >= 1.0f) {
                     transitionAlpha = 1.0f;
                     if (net.isServer()) {
-                        if (!baseMap.nextLevelPath.empty()) {
-                            baseMap.loadMapFromJson(baseMap.nextLevelPath);
+                        if (!level.nextLevelPath.empty()) {
+                            level.loadMapFromJson(level.nextLevelPath);
                             resetPlayersToSpawn();
 
                             int data[2] = { PACKET_CHANGE_LEVEL, MSG_LOAD_MAP };
@@ -176,7 +176,7 @@ void GameManager::processNetwork() {
                     WelcomePacket wpkt;
                     wpkt.assignedId = net.getNextId();
 
-                    std::string currentMap = baseMap.path.empty() ? "assets/maps/level1.json" : baseMap.path;
+                    std::string currentMap = level.path.empty() ? "assets/maps/level1.json" : level.path;
                     strncpy_s(wpkt.currentLevelPath, sizeof(wpkt.currentLevelPath), currentMap.c_str(), 127);
 
                     net.sendPacket(peer, &wpkt, sizeof(WelcomePacket), true);
@@ -200,7 +200,7 @@ void GameManager::processNetwork() {
                 if (type == PACKET_WELCOME) {
                     WelcomePacket* pkt = (WelcomePacket*)event.packet->data;
                     net.setMyId(pkt->assignedId);
-                    baseMap.loadMapFromJson(pkt->currentLevelPath);
+                    level.loadMapFromJson(pkt->currentLevelPath);
                 }
                 else if (type == PACKET_STATE) {
                     StatePacket* pkt = (StatePacket*)event.packet->data;
@@ -209,8 +209,8 @@ void GameManager::processNetwork() {
                 }
                 else if (type == PACKET_ENTITY_STATE) {
                     StatePacket* pkt = (StatePacket*)event.packet->data;
-                    if (pkt->id >= 0 && pkt->id < baseMap.entities.size()) {
-                        Car* car = (Car*)baseMap.entities[pkt->id];
+                    if (pkt->id >= 0 && pkt->id < level.entities.size()) {
+                        Car* car = (Car*)level.entities[pkt->id];
                         car->posX = (int)pkt->x; car->posY = (int)pkt->y;
                         car->movingLeft = (pkt->current_frame_y == 1);
                     }
@@ -221,8 +221,8 @@ void GameManager::processNetwork() {
                 else if (type == PACKET_CHANGE_LEVEL && event.packet->dataLength >= sizeof(int) * 2) {
                     int* data = (int*)event.packet->data;
                     if (data[1] == MSG_LOAD_MAP) {
-                        if (!baseMap.nextLevelPath.empty()) {
-                            baseMap.loadMapFromJson(baseMap.nextLevelPath);
+                        if (!level.nextLevelPath.empty()) {
+                            level.loadMapFromJson(level.nextLevelPath);
                             isTransitioning = false; doorClosed = false; transitionAlpha = 0.0f;
                         }
                     }
@@ -257,16 +257,16 @@ void GameManager::updateGameLogic() {
         players[i]->updateMovingState();
 
         if (!players[i]->finished) {
-            if (baseMap.checkBusCollision(players[i]->posX, players[i]->posY, 32, 32))
+            if (level.checkBusCollision(players[i]->posX, players[i]->posY, 32, 32))
                 players[i]->finished = true;
         }
         else finishedCount++;
     }
 
-    // 2. Movimento e Colisão dos Carros
+    // 2. Movimento e Colisao dos Carros
     bool accidentHappened = false;
 
-    for (auto& e : baseMap.entities) {
+    for (auto& e : level.entities) {
         e->move();
 
         if (e->checkCollision(players)) {
@@ -274,12 +274,12 @@ void GameManager::updateGameLogic() {
         }
     }
 
-    // 3. Reset (Lógica da Discórdia)
+    // 3. Reset (Logica da Discordia)
     if (accidentHappened) {
         resetPlayersToSpawn();
     }
 
-    // 4. Vitória
+    // 4. Vitoria
     if (finishedCount > 0 && finishedCount == activePlayers) {
         isTransitioning = true; doorClosed = true; transitionAlpha = 0.0f;
         int type = PACKET_START_TRANSITION;
@@ -292,7 +292,7 @@ void GameManager::updateGameLogic() {
 void GameManager::resetPlayersToSpawn() {
     for (size_t i = 0; i < players.size(); i++) {
         players[i]->finished = false;
-        if (i < baseMap.spawnPoints.size()) players[i]->setPos(baseMap.spawnPoints[i].x, baseMap.spawnPoints[i].y);
+        if (i < level.spawnPoints.size()) players[i]->setPos(level.spawnPoints[i].x, level.spawnPoints[i].y);
         else players[i]->setPos(100 + i * 32, 100);
     }
 }
@@ -307,9 +307,9 @@ void GameManager::handleInput(ALLEGRO_EVENT& ev) {
         if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
             if (btnHost.isOver(gameMouseX, gameMouseY)) {
                 if (net.startHost(1234)) {
-                    baseMap.loadMapFromJson("assets/maps/level1.json");
+                    level.loadMapFromJson("assets/maps/level1.json");
                     players.clear();
-                    players.push_back(new Chicken()); players.push_back(new Bull());
+                    players.push_back(new Buzzo()); players.push_back(new Chicken()); players.push_back(new Bull());
                     players.push_back(new Pig()); players.push_back(new Sheep()); players.push_back(new Turkey());
                     resetPlayersToSpawn();
                     currentState = STATE_GAME;
@@ -318,7 +318,7 @@ void GameManager::handleInput(ALLEGRO_EVENT& ev) {
             else if (btnJoin.isOver(gameMouseX, gameMouseY)) {
                 if (net.startClient(inputIP, 1234)) {
                     players.clear();
-                    players.push_back(new Chicken()); players.push_back(new Bull());
+                    players.push_back(new Buzzo()); players.push_back(new Chicken()); players.push_back(new Bull());
                     players.push_back(new Pig()); players.push_back(new Sheep()); players.push_back(new Turkey());
                     currentState = STATE_GAME;
                 }
@@ -391,12 +391,12 @@ void GameManager::draw() {
         al_draw_text(font, al_map_rgb(0, 255, 0), SCREENWIDTH / 2, 275, ALLEGRO_ALIGN_CENTRE, inputIP.c_str());
     }
     else if (currentState == STATE_GAME || currentState == STATE_PAUSE) {
-        if (baseMap.isLoaded) {
-            baseMap.drawMap();
-            baseMap.drawBus(doorClosed);
-            for (auto& e : baseMap.entities) e->draw();
+        if (level.isLoaded) {
+            level.drawMap();
+            level.drawBus(doorClosed);
+            for (auto& e : level.entities) e->draw();
             for (auto& p : players) p->draw();
-            if (fontSmall) al_draw_text(fontSmall, al_map_rgb(255, 255, 255), SCREENWIDTH - 10, 10, ALLEGRO_ALIGN_RIGHT, baseMap.title.c_str());
+            if (fontSmall) al_draw_text(fontSmall, al_map_rgb(255, 255, 255), SCREENWIDTH - 10, 10, ALLEGRO_ALIGN_RIGHT, level.title.c_str());
         }
         else {
             al_draw_text(font, al_map_rgb(255, 255, 255), SCREENWIDTH / 2, SCREENHEIGHT / 2, ALLEGRO_ALIGN_CENTRE, "SINCRONIZANDO...");
@@ -433,8 +433,8 @@ void GameManager::broadcastState() {
     }
 
     // Envia estado dos Carros
-    for (int i = 0; i < baseMap.entities.size(); i++) {
-        Car* car = (Car*)baseMap.entities[i];
+    for (int i = 0; i < level.entities.size(); i++) {
+        Car* car = (Car*)level.entities[i];
         StatePacket pkt;
         pkt.type = PACKET_ENTITY_STATE;
         pkt.id = i;

@@ -1,9 +1,9 @@
-#include "Sheep.h"
-#include "ResourceManager.h"
+#include "src/entities/players/Bull/Bull.h"
+#include "src/managers/resource/ResourceManager.h"
 
-Sheep::Sheep() {
-	w = 32;
-	h = 32;
+Bull::Bull() {
+	w = 64;
+	h = 64;
 	frame = 1.f;
 	current_frame_y = 0;
 	posX = (WMAP * BLOCKSIZE / 2) - 16;
@@ -11,20 +11,20 @@ Sheep::Sheep() {
 	sprite = ResourceManager::get().getBitmap(urlSprite);
 }
 
-void Sheep::reloadBitmap() {
+void Bull::reloadBitmap() {
 	sprite = ResourceManager::get().getBitmap(urlSprite);
 }
 
-void Sheep::keyDOWN(int keycode) {
+void Bull::keyDOWN(int keycode) {
 	switch (keycode) {
-	case ALLEGRO_KEY_W: keys[W] = true; current_frame_y = 32; break;
+	case ALLEGRO_KEY_W: keys[W] = true; current_frame_y = 64; break;
 	case ALLEGRO_KEY_S: keys[S] = true; current_frame_y = 0; break;
-	case ALLEGRO_KEY_A: keys[A] = true; current_frame_y = 32 * 2; break;
-	case ALLEGRO_KEY_D: keys[D] = true; current_frame_y = 32 * 3; break;
+	case ALLEGRO_KEY_A: keys[A] = true; current_frame_y = 64 * 2; break;
+	case ALLEGRO_KEY_D: keys[D] = true; current_frame_y = 64 * 3; break;
 	}
 }
 
-void Sheep::keyUP(int keycode) {
+void Bull::keyUP(int keycode) {
 	switch (keycode) {
 	case ALLEGRO_KEY_W: keys[W] = false; break;
 	case ALLEGRO_KEY_S: keys[S] = false; break;
@@ -33,7 +33,7 @@ void Sheep::keyUP(int keycode) {
 	}
 }
 
-bool Sheep::borderCollide() {
+bool Bull::borderCollide() {
 	if (posX > WMAP * BLOCKSIZE - 32) { posX -= 2; return true; }
 	if (posX < 0) { posX += 2; return true; }
 	if (posY < 0) { posY += 2; return true; }
@@ -41,7 +41,7 @@ bool Sheep::borderCollide() {
 	return false;
 }
 
-void Sheep::move() {
+void Bull::move() {
 	if (!borderCollide()) {
 		if (keys[D]) posX += 2;
 		if (keys[A]) posX -= 2;

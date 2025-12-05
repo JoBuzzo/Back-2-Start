@@ -1,12 +1,12 @@
-#include "BaseMap.h"
+#include "src/levels/Level.h"
 #include <fstream>
 #include <algorithm>
 #include <nlohmann/json.hpp>
-#include "ResourceManager.h" // <--- 1. IMPORTANTE: Incluir o Gerenciador
+#include "src/managers/resource/ResourceManager.h"
 
 using json = nlohmann::json;
 
-BaseMap::BaseMap() {
+Level::Level() {
     busSheet = nullptr;
     busFrameW = 0;
     busFrameH = 0;
@@ -17,25 +17,13 @@ BaseMap::BaseMap() {
             map[i][j] = 0;
 }
 
-BaseMap::~BaseMap() {
-    // --- 2. MUDANÇA: NÃO DESTRUIR ASSETS GLOBAIS ---
-    // Como usamos o ResourceManager, não damos destroy no busSheet nem nos tiles aqui.
-    // O ResourceManager limpará tudo quando o jogo fechar.
-
-    // if (busSheet) al_destroy_bitmap(busSheet); <--- REMOVIDO
-
-    // for (int i = 0; i < 20; i++) {
-    //    if (tiles[i]) al_destroy_bitmap(tiles[i]); <--- REMOVIDO
-    // }
-
-    // Entidades (Carros) ainda são objetos únicos dessa fase, então deletamos os OBJETOS
-    // (Mas atenção: dentro de Car::destroy, não destrua o sprite se ele vier do ResourceManager)
+Level::~Level() {
     for (auto e : entities) {
         if (e) { e->destroy(); delete e; }
     }
 }
 
-bool BaseMap::loadMapFromJson(const std::string& jsonPath) {
+bool Level::loadMapFromJson(const std::string& jsonPath) {
     isLoaded = false;
 
     path = jsonPath;
@@ -72,9 +60,6 @@ bool BaseMap::loadMapFromJson(const std::string& jsonPath) {
         checkpoint.x = j["checkpoint"]["x"].get<int>() * BLOCKSIZE;
         checkpoint.y = j["checkpoint"]["y"].get<int>() * BLOCKSIZE;
 
-        // --- 3. MUDANÇA: USANDO RESOURCE MANAGER ---
-        // Não carregamos do disco. Pedimos ao gerente.
-        // Se já estiver carregado, é instantâneo.
         busSheet = ResourceManager::get().getBitmap("assets/sprites/cars/bus.png");
 
         if (busSheet) {
@@ -89,10 +74,6 @@ bool BaseMap::loadMapFromJson(const std::string& jsonPath) {
     if (j.contains("tiles")) {
         tileNames = j["tiles"].get<std::vector<std::string>>();
         for (size_t i = 0; i < tileNames.size(); i++) {
-            // Não precisamos destruir o anterior, pois é apenas um ponteiro compartilhado.
-            // Apenas sobrescrevemos o ponteiro com o novo endereço.
-
-            // --- 3. MUDANÇA: USANDO RESOURCE MANAGER ---
             tiles[i] = ResourceManager::get().getBitmap(tileNames[i]);
 
             if (!tiles[i]) {
@@ -148,7 +129,7 @@ bool BaseMap::loadMapFromJson(const std::string& jsonPath) {
     return true;
 }
 
-void BaseMap::drawMap() {
+void Level::drawMap() {
     if (!isLoaded) return;
 
     for (int i = 0; i < HMAP; i++) {
@@ -161,14 +142,14 @@ void BaseMap::drawMap() {
     }
 }
 
-void BaseMap::drawBus(bool isDoorClosed) {
+void Level::drawBus(bool isDoorClosed) {
     if (busSheet && isLoaded) {
         int srcX = isDoorClosed ? busFrameW : 0;
         al_draw_bitmap_region(busSheet, srcX, 0, busFrameW, busFrameH, checkpoint.x, checkpoint.y, 0);
     }
 }
 
-bool BaseMap::checkBusCollision(int px, int py, int pw, int ph) {
+bool Level::checkBusCollision(int px, int py, int pw, int ph) {
     if (!isLoaded) return false;
     int bx = checkpoint.x;
     int by = checkpoint.y;

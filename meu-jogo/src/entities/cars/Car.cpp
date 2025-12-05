@@ -1,7 +1,7 @@
-#include "Car.h"
+#include "src/entities/cars/Car.h"
 #include <cstdio>
 #include <vector>
-#include "ResourceManager.h"
+#include "src/managers/resource/ResourceManager.h"
 
 Car::Car()
     : sprite(nullptr), spritePath("test.png"), w(0), h(64), posX(0), posY(0),
@@ -57,7 +57,7 @@ void Car::destroy() {
 void Car::move() {
     if (!active) return;
 
-    float moveSpeed = std::abs(speed);
+    float moveSpeed = std::abs(speed * 2.5);
 
     if (movingLeft) {
         posX -= moveSpeed;

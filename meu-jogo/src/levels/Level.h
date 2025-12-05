@@ -1,14 +1,14 @@
 #pragma once
-#include "Config.h"
+#include "src/core/Config.h"
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_image.h>
 #include <string>
 #include <vector>
-#include "Car.h"
+#include "src/entities/cars/Car.h"
 
 struct Point { int x, y; };
 
-class BaseMap {
+class Level {
 public:
     bool isLoaded;
 
@@ -27,8 +27,8 @@ public:
     std::vector<Car*> entities;
     ALLEGRO_BITMAP* tiles[20] = { nullptr };
 
-    BaseMap();
-    virtual ~BaseMap();
+    Level();
+    virtual ~Level();
 
     bool loadMapFromJson(const std::string& jsonPath);
     void drawMap();

@@ -131,7 +131,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\vcpkg-master\installed\x64-windows\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);C:\vcpkg-master\installed\x64-windows\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -152,7 +152,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\vcpkg-master\installed\x64-windows\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);C:\vcpkg-master\installed\x64-windows\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -171,7 +171,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\vcpkg-master\installed\x64-windows\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);C:\vcpkg-master\installed\x64-windows\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -192,7 +192,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\vcpkg-master\installed\x64-windows\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);C:\vcpkg-master\installed\x64-windows\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -208,34 +208,18 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="BaseMap.cpp" />
-    <ClCompile Include="Bull.cpp" />
-    <ClCompile Include="Car.cpp" />
-    <ClCompile Include="Chicken.cpp" />
-    <ClCompile Include="GameManager.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="NetworkManager.cpp" />
-    <ClCompile Include="Pig.cpp" />
-    <ClCompile Include="Player.cpp" />
-    <ClCompile Include="Sheep.cpp" />
-    <ClCompile Include="Turkey.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="BaseMap.h" />
-    <ClInclude Include="Bull.h" />
-    <ClInclude Include="Car.h" />
-    <ClInclude Include="Chicken.h" />
-    <ClInclude Include="Config.h" />
-    <ClInclude Include="GameManager.h" />
-    <ClInclude Include="Menu.h" />
-    <ClInclude Include="NetworkManager.h" />
-    <ClInclude Include="NetworkProtocol.h" />
-    <ClInclude Include="Pig.h" />
-    <ClInclude Include="Player.h" />
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="ResourceManager.h" />
-    <ClInclude Include="Sheep.h" />
-    <ClInclude Include="Turkey.h" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\levels\Level.cpp" />
+    <ClCompile Include="src\managers\game\GameManager.cpp" />
+    <ClCompile Include="src\managers\network\NetworkManager.cpp" />
+    <ClCompile Include="src\entities\cars\Car.cpp" />
+    <ClCompile Include="src\entities\players\Player.cpp" />
+    <ClCompile Include="src\entities\players\Chicken\Chicken.cpp" />
+    <ClCompile Include="src\entities\players\Bull\Bull.cpp" />
+    <ClCompile Include="src\entities\players\Buzzo\Buzzo.cpp" />
+    <ClCompile Include="src\entities\players\Pig\Pig.cpp" />
+    <ClCompile Include="src\entities\players\Sheep\Sheep.cpp" />
+    <ClCompile Include="src\entities\players\Turkey\Turkey.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="meu-jogo.rc" />
