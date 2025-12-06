@@ -8,10 +8,8 @@
 #include <vector>
 #include <string>
 
-// Enums e Constantes
+
 enum GameState { STATE_MENU, STATE_GAME, STATE_PAUSE, STATE_ENDGAME };
-const int MSG_LOAD_MAP = 0;
-const int MSG_END_GAME = 1;
 
 struct Button {
     int x, y, w, h;
@@ -53,16 +51,22 @@ private:
     // --- UI ---
     Button btnHost, btnJoin, btnExit, btnResume, btnQuit;
 
+    bool isDeathSequence;
+    float deathTimer; 
+    std::string currentMockery; 
+    std::vector<std::string> mockeryList;
+
     // --- Metodos ---
     bool initAllegro();
     void cleanup();
 
     void resetPlayersToSpawn();
     void broadcastState();
-    void updateGameLogic();    // Logica do Servidor
-    void processNetwork();     // Callbacks da Rede
+    void updateGameLogic(); 
+    void processNetwork();
     void handleInput(ALLEGRO_EVENT& ev);
     void draw();
+    void startDeathSequence();
 
 public:
     GameManager();

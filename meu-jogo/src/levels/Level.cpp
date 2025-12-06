@@ -14,6 +14,12 @@ Level::Level() {
     
     weatherSprite = nullptr;
     hasWeather = false;
+    weatherFrames = 1;
+    weatherCurrentFrame = 0;
+    weatherTimer = 0;
+    weatherSpeed = 10;
+    weatherFrameW = 0;
+    weatherFrameH = 0;
 
     for (int i = 0; i < HMAP; i++)
         for (int j = 0; j < WMAP; j++)
@@ -50,7 +56,6 @@ bool Level::loadMapFromJson(const std::string& jsonPath) {
     }
     entities.clear();
 
-
     if (j.contains("title") && !j["title"].is_null())
         title = j["title"].get<std::string>();
     else title = "";
@@ -59,12 +64,11 @@ bool Level::loadMapFromJson(const std::string& jsonPath) {
         nextLevelPath = j["nextLevel"].get<std::string>();
     else nextLevelPath = "";
 
-    if (weatherSprite) { al_destroy_bitmap(weatherSprite); weatherSprite = nullptr; }
+    weatherSprite = nullptr; 
     hasWeather = false;
 
-    // Agora procura por "weather" no JSON
     if (j.contains("weather")) {
-        auto wData = j["weather"]; // wData = weatherData
+        auto wData = j["weather"];
         std::string wPath = wData["path"];
         
         weatherSprite = ResourceManager::get().getBitmap(wPath);
@@ -74,12 +78,14 @@ bool Level::loadMapFromJson(const std::string& jsonPath) {
             weatherFrames = wData.value("frames", 1);
             weatherSpeed  = wData.value("speed", 10);
             
-            // Cálculos
             weatherFrameW = al_get_bitmap_width(weatherSprite) / weatherFrames;
             weatherFrameH = al_get_bitmap_height(weatherSprite);
+            
+            weatherCurrentFrame = 0;
+            weatherTimer = 0;
         }
     }
-    // -------------------------------------
+    // -------------------------------------------
 
     if (j.contains("checkpoint")) {
         checkpoint.x = j["checkpoint"]["x"].get<int>() * BLOCKSIZE;
@@ -91,35 +97,24 @@ bool Level::loadMapFromJson(const std::string& jsonPath) {
             busFrameW = al_get_bitmap_width(busSheet) / 2;
             busFrameH = al_get_bitmap_height(busSheet);
         }
-        else {
-            printf("[ERRO VISUAL] Nao achei a imagem do onibus!\n");
-        }
     }
 
     if (j.contains("tiles")) {
         tileNames = j["tiles"].get<std::vector<std::string>>();
         for (size_t i = 0; i < tileNames.size(); i++) {
             tiles[i] = ResourceManager::get().getBitmap(tileNames[i]);
-
-            if (!tiles[i]) {
-                printf("[ERRO] Falha ao carregar tile: %s\n", tileNames[i].c_str());
-            }
+            if (!tiles[i]) printf("[ERRO] Falha ao carregar tile: %s\n", tileNames[i].c_str());
         }
     }
 
     tileProps.clear();
-
-    if (!tileNames.empty()) {
-        tileProps.resize(tileNames.size());
-    }
+    if (!tileNames.empty()) tileProps.resize(tileNames.size());
 
     if (j.contains("tileProperties")) {
         for (auto& element : j["tileProperties"].items()) {
             int id = std::stoi(element.key());
-
             if (id >= 0 && id < tileProps.size()) {
                 auto props = element.value();
-
                 if (props.contains("solid")) tileProps[id].solid = props["solid"];
                 if (props.contains("deadly")) tileProps[id].deadly = props["deadly"];
                 if (props.contains("speedFactor")) tileProps[id].speedFactor = props["speedFactor"];
@@ -135,13 +130,11 @@ bool Level::loadMapFromJson(const std::string& jsonPath) {
             if (type == "car") {
                 Car* car = new Car();
                 if (e.contains("sprite")) car->spritePath = e["sprite"].get<std::string>();
-
                 car->setPosX(e["posX"].get<int>());
                 car->setPosY(e["posY"].get<int>());
-
                 car->speed = e["speed"].get<float>();
                 car->active = e["active"].get<bool>();
-
+                
                 if (e.contains("frameCount")) car->frameCount = e["frameCount"].get<int>();
                 else car->frameCount = 1;
 
@@ -183,24 +176,19 @@ void Level::updateWeather() {
     if (weatherTimer >= weatherSpeed) {
         weatherTimer = 0;
         weatherCurrentFrame++;
-        
         if (weatherCurrentFrame >= weatherFrames) {
             weatherCurrentFrame = 0;
         }
-        
     }
 }
 
 void Level::drawWeather() {
     if (!hasWeather || !weatherSprite) return;
 
-
     float sx = weatherCurrentFrame * weatherFrameW;
 
     for (int y = 0; y < SCREENHEIGHT; y += weatherFrameH) {
-        
         for (int x = 0; x < SCREENWIDTH; x += weatherFrameW) {
-            
             al_draw_bitmap_region(weatherSprite, 
                 sx, 0,
                 weatherFrameW, weatherFrameH,
@@ -212,7 +200,6 @@ void Level::drawWeather() {
 
 void Level::drawMap() {
     if (!isLoaded) return;
-
     for (int i = 0; i < HMAP; i++) {
         for (int j = 0; j < WMAP; j++) {
             int tileIndex = map[i][j];
@@ -237,4 +224,13 @@ bool Level::checkBusCollision(int px, int py, int pw, int ph) {
     int bw = busFrameW;
     int bh = busFrameH;
     return (px < bx + bw && px + pw > bx && py < by + bh && py + ph > by);
+}
+
+void Level::reset() {
+    weatherCurrentFrame = 0;
+    weatherTimer = 0;
+
+    if (!path.empty()) {
+        loadMapFromJson(path); 
+    }
 }

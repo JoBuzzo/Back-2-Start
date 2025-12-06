@@ -65,4 +65,5 @@ public:
         
         return map[row][col];
     }
+    void reset();
 };

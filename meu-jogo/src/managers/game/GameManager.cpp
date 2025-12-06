@@ -5,6 +5,8 @@
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_ttf.h>
 #include <cstdio>
+#include <vector>
+#include <string>
 
 // Include dos bichos
 #include "src/entities/players/Bull/Bull.h"
@@ -35,7 +37,8 @@ GameManager::GameManager()
       running(true), redraw(true), currentState(STATE_MENU), inputIP("127.0.0.1"),
       scale(1.0f), scaleX(0.0f), scaleY(0.0f),
       isTransitioning(false), transitionAlpha(0.0f), doorClosed(false),
-      gameMouseX(0), gameMouseY(0)
+      gameMouseX(0), gameMouseY(0),
+      isDeathSequence(false), deathTimer(0.0f) // Inicializa variaveis de morte
 {
     int btnW = 300; int btnH = 50;
     int centerX = SCREENWIDTH / 2 - (btnW / 2);
@@ -44,6 +47,17 @@ GameManager::GameManager()
     btnExit = { centerX, 450, btnW, btnH, "SAIR DO JOGO" };
     btnResume = { centerX, 200, btnW, btnH, "CONTINUAR" };
     btnQuit = { centerX, 300, btnW, btnH, "VOLTAR AO MENU" };
+
+    // Lista de frases para a tela de morte
+    mockeryList = {
+        "ESCORREGOU NO QUIABO?",
+        "FOI DE ARRASTA PRA CIMA.",
+        "HABILIDADE COMPROMETIDA.",
+        "NEM O GPS TE SALVA.",
+        "TENTE NAO MORRER DA PROXIMA.",
+        "LAG? ACHO QUE NAO...",
+        "DE NOVO? SERIO?"
+    };
 }
 
 GameManager::~GameManager() {
@@ -108,6 +122,27 @@ void GameManager::cleanup() {
     if (display) al_destroy_display(display);
 }
 
+// --- NOVO MÉTODO: Inicia a Tela de Morte ---
+void GameManager::startDeathSequence() {
+    if (isDeathSequence) return;
+
+    isDeathSequence = true;
+    isTransitioning = true;
+    doorClosed = true;
+    transitionAlpha = 0.0f;
+    deathTimer = 0.0f;
+
+    // Escolhe frase
+    int idx = rand() % mockeryList.size();
+    currentMockery = mockeryList[idx];
+
+    // Avisa Clientes
+    if (net.isServer()) {
+        int data[2] = { PACKET_CHANGE_LEVEL, MSG_DEATH_SEQUENCE };
+        net.broadcastPacket(data, sizeof(data), true);
+    }
+}
+
 void GameManager::run() {
     if (!net.init()) return;
     if (!initAllegro()) return;
@@ -119,15 +154,38 @@ void GameManager::run() {
         if (ev.type == ALLEGRO_EVENT_TIMER) {
             redraw = true;
 
-            // --- Logica de Transicao ---
+            // --- Logica de Transicao e Morte ---
             if (isTransitioning) {
-                transitionAlpha += 0.02f;
+                // Se for morte, escurece mais rápido
+                transitionAlpha += isDeathSequence ? 0.05f : 0.02f;
+                
                 if (transitionAlpha >= 1.0f) {
                     transitionAlpha = 1.0f;
-                    if (net.isServer()) {
+
+                    // === TELA DE MORTE ===
+                    if (isDeathSequence) {
+                        deathTimer += 1.0f / 60.0f; 
+
+                        if (deathTimer >= 2.5f) { // Fica 2.5s na tela preta
+                            
+                            // Só o servidor reseta a lógica
+                            if (net.isServer()) {
+                                level.reset();         // Reseta o mapa (neve, carros)
+                                resetPlayersToSpawn(); // Reseta posições
+                            }
+                            
+                            // Fim da tela de morte
+                            isDeathSequence = false;
+                            isTransitioning = false; 
+                            transitionAlpha = 0.0f; 
+                            doorClosed = false;
+                        }
+                    }
+                    // === TROCA DE FASE NORMAL ===
+                    else if (net.isServer()) {
                         if (!level.nextLevelPath.empty()) {
                             level.loadMapFromJson(level.nextLevelPath);
-                            resetPlayersToSpawn();
+                            resetPlayersToSpawn(); // Reseta (e zera gravidade)
 
                             int data[2] = { PACKET_CHANGE_LEVEL, MSG_LOAD_MAP };
                             net.broadcastPacket(data, sizeof(data), true);
@@ -148,6 +206,7 @@ void GameManager::run() {
             if (currentState == STATE_GAME || currentState == STATE_PAUSE || currentState == STATE_ENDGAME) {
                 processNetwork();
 
+                // Só processa lógica se não estiver na transição de morte
                 if (currentState == STATE_GAME && !isTransitioning) {
                     updateGameLogic();
                 }
@@ -212,8 +271,8 @@ void GameManager::processNetwork() {
                             pkt->current_frame_y, 
                             pkt->isMoving, 
                             pkt->isFinished,
-                            pkt->z,         // <--- AGORA RECEBE O Z (Sombra)
-                            pkt->isJumping  // <--- AGORA RECEBE O PULO
+                            pkt->z,         // Recebe Z
+                            pkt->isJumping  // Recebe Pulo
                         );
                 }
                 else if (type == PACKET_ENTITY_STATE) {
@@ -239,6 +298,17 @@ void GameManager::processNetwork() {
                         currentState = STATE_ENDGAME;
                         isTransitioning = false; transitionAlpha = 0.0f;
                     }
+                    // --- NOVO: Cliente recebe Morte ---
+                    else if (data[1] == MSG_DEATH_SEQUENCE) {
+                        isDeathSequence = true;
+                        isTransitioning = true;
+                        transitionAlpha = 0.0f;
+                        deathTimer = 0.0f;
+                        
+                        // Sorteia frase localmente
+                        int idx = rand() % mockeryList.size();
+                        currentMockery = mockeryList[idx];
+                    }
                 }
             }
             // SERVIDOR
@@ -256,12 +326,12 @@ void GameManager::processNetwork() {
 
 void GameManager::updateGameLogic() {
     
+    // 1. Atualiza Visual (Para todos)
     if (currentState == STATE_GAME && !isTransitioning) {
         level.updateWeather();
     }
 
     if (!net.isServer()) return;
-
 
     int finishedCount = 0;
     int activePlayers = net.getNextId();
@@ -270,7 +340,6 @@ void GameManager::updateGameLogic() {
     // 1. Movimento dos Players
     for (size_t i = 0; i < (size_t)activePlayers; i++) {
         
-        // --- A. PEGAR HITBOX ATUAL ---
         int hx, hy, hw, hh;
         players[i]->getHitbox(hx, hy, hw, hh);
         
@@ -281,31 +350,29 @@ void GameManager::updateGameLogic() {
         int tileID = level.getTileIdAt(footX, footY);
         TileData props = level.getTileProp(tileID);
 
-        // Tile Mortal (Lava/Espinhos/Buraco)
+        // Tile Mortal (Lava)
         if (props.deadly) {
-            // Só morre se estiver no chão (z baixo)
             if (players[i]->z <= 2.0f) { 
-                accidentHappened = true;
-                break;
+                accidentHappened = true; // Marca reset coletivo
+                break; // Sai do loop
             }
         }
 
-        // Tile de Força (Correnteza/Esteira)
+        // Força
         if (props.forceX != 0 || props.forceY != 0) {
             players[i]->posX += (int)props.forceX;
             players[i]->posY += (int)props.forceY;
         }
 
-        // Tile de Velocidade (Lama/Gelo)
+        // Velocidade
         players[i]->terrainFactor = props.speedFactor; 
 
-        // --- MOVIMENTO NORMAL ---
+        // Movimento
         players[i]->move();
         players[i]->updateMovingState();
 
-        // Recalcula hitbox após movimento para colisão do ônibus
+        // Checa Vitória
         players[i]->getHitbox(hx, hy, hw, hh);
-
         if (!players[i]->finished) {
             if (level.checkBusCollision(hx, hy, hw, hh))
                 players[i]->finished = true;
@@ -313,7 +380,7 @@ void GameManager::updateGameLogic() {
         else finishedCount++;
     }
 
-    // 2. Movimento e Colisao dos Carros
+    // 2. Colisão Carros
     if (!accidentHappened) {
         for (auto& e : level.entities) {
             e->move();
@@ -323,9 +390,9 @@ void GameManager::updateGameLogic() {
         }
     }
 
-    // 3. Reset Coletivo (Lava ou Carro)
+    // 3. Reset Coletivo (Agora com Tela de Morte)
     if (accidentHappened) {
-        resetPlayersToSpawn();
+        startDeathSequence();
     }
 
     // 4. Vitoria
@@ -339,14 +406,16 @@ void GameManager::updateGameLogic() {
 }
 
 void GameManager::resetPlayersToSpawn() {
+    // Não precisa chamar level.reset() aqui, pois já chamamos no startDeathSequence
+    // ou podemos manter se quiser garantir
+    
     for (size_t i = 0; i < players.size(); i++) {
         players[i]->finished = false;
         
-        // --- CORREÇÃO: Zera a física do pulo ---
+        // Zera física
         players[i]->z = 0;
         players[i]->vz = 0;
         players[i]->isJumping = false;
-        // ---------------------------------------
 
         if (i < level.spawnPoints.size()) 
             players[i]->setPos(level.spawnPoints[i].x, level.spawnPoints[i].y);
@@ -365,7 +434,9 @@ void GameManager::handleInput(ALLEGRO_EVENT& ev) {
         if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
             if (btnHost.isOver(gameMouseX, gameMouseY)) {
                 if (net.startHost(1234)) {
+                    // Carrega do zero
                     level.loadMapFromJson("assets/maps/level1.json");
+                    
                     players.clear();
                     players.push_back(new Buzzo()); 
                     players.push_back(new Chicken()); 
@@ -433,6 +504,10 @@ void GameManager::handleInput(ALLEGRO_EVENT& ev) {
             else if (btnQuit.isOver(gameMouseX, gameMouseY)) {
                 net.disconnect();
                 for (auto p : players) delete p; players.clear();
+                
+                // RESET TOTAL AO SAIR
+                level.reset(); // Limpa nevasca
+                
                 currentState = STATE_MENU;
             }
         }
@@ -441,6 +516,10 @@ void GameManager::handleInput(ALLEGRO_EVENT& ev) {
         if (ev.type == ALLEGRO_EVENT_KEY_DOWN && ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
             net.disconnect();
             for (auto p : players) delete p; players.clear();
+            
+            // RESET TOTAL AO SAIR
+            level.reset(); 
+            
             currentState = STATE_MENU;
         }
     }
@@ -461,19 +540,33 @@ void GameManager::draw() {
     else if (currentState == STATE_GAME || currentState == STATE_PAUSE) {
         if (level.isLoaded) {
             
+            // 1. Mapa
             level.drawMap();
+            
+            // 2. Entidades
             level.drawBus(doorClosed);
             for (auto& e : level.entities) e->draw();
             for (auto& p : players) p->draw();
             
+            // 3. Overlay (Neve)
             level.drawWeather();
+            
+            // 4. UI
             if (fontSmall) al_draw_text(fontSmall, al_map_rgb(255, 255, 255), SCREENWIDTH - 10, 10, ALLEGRO_ALIGN_RIGHT, level.title.c_str());
         }
         else {
             al_draw_text(font, al_map_rgb(255, 255, 255), SCREENWIDTH / 2, SCREENHEIGHT / 2, ALLEGRO_ALIGN_CENTRE, "SINCRONIZANDO...");
         }
 
-        if (transitionAlpha > 0.0f) al_draw_filled_rectangle(0, 0, SCREENWIDTH, SCREENHEIGHT, al_map_rgba_f(0, 0, 0, transitionAlpha));
+        // Tela de transição / Morte
+        if (transitionAlpha > 0.0f) 
+            al_draw_filled_rectangle(0, 0, SCREENWIDTH, SCREENHEIGHT, al_map_rgba_f(0, 0, 0, transitionAlpha));
+
+        // Texto da Morte (Zoeira)
+        if (isDeathSequence && transitionAlpha > 0.9f) {
+            al_draw_text(font, al_map_rgb(255, 50, 50), SCREENWIDTH / 2, SCREENHEIGHT / 2 - 20, ALLEGRO_ALIGN_CENTRE, "VOCE PERDEU!");
+            al_draw_text(fontSmall, al_map_rgb(200, 200, 200), SCREENWIDTH / 2, SCREENHEIGHT / 2 + 20, ALLEGRO_ALIGN_CENTRE, currentMockery.c_str());
+        }
 
         if (currentState == STATE_PAUSE) {
             al_draw_filled_rectangle(0, 0, SCREENWIDTH, SCREENHEIGHT, al_map_rgba(0, 0, 0, 150));
