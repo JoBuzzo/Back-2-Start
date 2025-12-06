@@ -16,6 +16,7 @@ struct InputPacket {
     bool isDown = false;
 };
 
+// --- AQUI ESTÁ A MUDANÇA ---
 struct StatePacket {
     int type = PACKET_STATE;
     int id = -1;
@@ -24,7 +25,11 @@ struct StatePacket {
     int current_frame_y = 0;
     bool isMoving = false;
     bool isFinished = false;
+
+    float z = 0.0f;
+    bool isJumping = false;
 };
+// ---------------------------
 
 struct WelcomePacket {
     int type = PACKET_WELCOME;

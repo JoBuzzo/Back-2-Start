@@ -57,7 +57,7 @@ public:
 
     void clear() {
         for (auto& pair : bitmaps) {
-            al_destroy_bitmap(pair.second);
+                al_destroy_bitmap(pair.second);
         }
         bitmaps.clear();
 

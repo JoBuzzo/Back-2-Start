@@ -17,6 +17,7 @@
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "winmm.lib")
 
+// --- Métodos Auxiliares de UI ---
 bool Button::isOver(float mx, float my) {
     return (mx >= x && mx <= x + w && my >= y && my <= y + h);
 }
@@ -27,7 +28,8 @@ void Button::draw(ALLEGRO_FONT* font, bool hover) {
     al_draw_text(font, al_map_rgb(255, 255, 255), x + w / 2, y + 10, ALLEGRO_ALIGN_CENTRE, text);
 }
 
-// --- GameManager ---
+// --- GameManager Implementation ---
+
 GameManager::GameManager() 
     : display(nullptr), queue(nullptr), timer(nullptr), font(nullptr), fontSmall(nullptr), trans(),
       running(true), redraw(true), currentState(STATE_MENU), inputIP("127.0.0.1"),
@@ -97,7 +99,6 @@ void GameManager::cleanup() {
 
     for (auto p : players) if (p) delete p;
     players.clear();
-
 
     if (timer) al_destroy_timer(timer);
     if (queue) al_destroy_event_queue(queue);
@@ -205,7 +206,15 @@ void GameManager::processNetwork() {
                 else if (type == PACKET_STATE) {
                     StatePacket* pkt = (StatePacket*)event.packet->data;
                     if (pkt->id >= 0 && pkt->id < players.size())
-                        players[pkt->id]->setNetworkState(pkt->x, pkt->y, pkt->current_frame_y, pkt->isMoving, pkt->isFinished);
+                        players[pkt->id]->setNetworkState(
+                            pkt->x, 
+                            pkt->y, 
+                            pkt->current_frame_y, 
+                            pkt->isMoving, 
+                            pkt->isFinished,
+                            pkt->z,         // <--- AGORA RECEBE O Z (Sombra)
+                            pkt->isJumping  // <--- AGORA RECEBE O PULO
+                        );
                 }
                 else if (type == PACKET_ENTITY_STATE) {
                     StatePacket* pkt = (StatePacket*)event.packet->data;
@@ -246,17 +255,55 @@ void GameManager::processNetwork() {
 }
 
 void GameManager::updateGameLogic() {
+    
+    if (currentState == STATE_GAME && !isTransitioning) {
+        level.updateWeather();
+    }
+
     if (!net.isServer()) return;
+
 
     int finishedCount = 0;
     int activePlayers = net.getNextId();
+    bool accidentHappened = false;
 
     // 1. Movimento dos Players
-    for (int i = 0; i < activePlayers; i++) {
+    for (size_t i = 0; i < (size_t)activePlayers; i++) {
+        
+        // --- A. PEGAR HITBOX ATUAL ---
+        int hx, hy, hw, hh;
+        players[i]->getHitbox(hx, hy, hw, hh);
+        
+        int footX = hx + (hw / 2);
+        int footY = hy + (hh / 2); 
+
+        // --- CHECAR TILE ESPECIAL ---
+        int tileID = level.getTileIdAt(footX, footY);
+        TileData props = level.getTileProp(tileID);
+
+        // Tile Mortal (Lava/Espinhos/Buraco)
+        if (props.deadly) {
+            // Só morre se estiver no chão (z baixo)
+            if (players[i]->z <= 2.0f) { 
+                accidentHappened = true;
+                break;
+            }
+        }
+
+        // Tile de Força (Correnteza/Esteira)
+        if (props.forceX != 0 || props.forceY != 0) {
+            players[i]->posX += (int)props.forceX;
+            players[i]->posY += (int)props.forceY;
+        }
+
+        // Tile de Velocidade (Lama/Gelo)
+        players[i]->terrainFactor = props.speedFactor; 
+
+        // --- MOVIMENTO NORMAL ---
         players[i]->move();
         players[i]->updateMovingState();
 
-        int hx, hy, hw, hh;
+        // Recalcula hitbox após movimento para colisão do ônibus
         players[i]->getHitbox(hx, hy, hw, hh);
 
         if (!players[i]->finished) {
@@ -267,17 +314,16 @@ void GameManager::updateGameLogic() {
     }
 
     // 2. Movimento e Colisao dos Carros
-    bool accidentHappened = false;
-
-    for (auto& e : level.entities) {
-        e->move();
-
-        if (e->checkCollision(players)) {
-            accidentHappened = true;
+    if (!accidentHappened) {
+        for (auto& e : level.entities) {
+            e->move();
+            if (e->checkCollision(players)) { 
+                accidentHappened = true;
+            }
         }
     }
 
-    // 3. Reset (Logica da Discordia)
+    // 3. Reset Coletivo (Lava ou Carro)
     if (accidentHappened) {
         resetPlayersToSpawn();
     }
@@ -295,8 +341,17 @@ void GameManager::updateGameLogic() {
 void GameManager::resetPlayersToSpawn() {
     for (size_t i = 0; i < players.size(); i++) {
         players[i]->finished = false;
-        if (i < level.spawnPoints.size()) players[i]->setPos(level.spawnPoints[i].x, level.spawnPoints[i].y);
-        else players[i]->setPos(100 + i * 32, 100);
+        
+        // --- CORREÇÃO: Zera a física do pulo ---
+        players[i]->z = 0;
+        players[i]->vz = 0;
+        players[i]->isJumping = false;
+        // ---------------------------------------
+
+        if (i < level.spawnPoints.size()) 
+            players[i]->setPos(level.spawnPoints[i].x, level.spawnPoints[i].y);
+        else 
+            players[i]->setPos(100 + i * 32, 100);
     }
 }
 
@@ -312,8 +367,13 @@ void GameManager::handleInput(ALLEGRO_EVENT& ev) {
                 if (net.startHost(1234)) {
                     level.loadMapFromJson("assets/maps/level1.json");
                     players.clear();
-                    players.push_back(new Buzzo()); players.push_back(new Chicken()); players.push_back(new Bull());
-                    players.push_back(new Pig()); players.push_back(new Sheep()); players.push_back(new Turkey());
+                    players.push_back(new Buzzo()); 
+                    players.push_back(new Chicken()); 
+                    players.push_back(new Turkey());
+                    players.push_back(new Bull());
+                    players.push_back(new Sheep()); 
+                    players.push_back(new Pig()); 
+
                     resetPlayersToSpawn();
                     currentState = STATE_GAME;
                 }
@@ -321,8 +381,13 @@ void GameManager::handleInput(ALLEGRO_EVENT& ev) {
             else if (btnJoin.isOver(gameMouseX, gameMouseY)) {
                 if (net.startClient(inputIP, 1234)) {
                     players.clear();
-                    players.push_back(new Buzzo()); players.push_back(new Chicken()); players.push_back(new Bull());
-                    players.push_back(new Pig()); players.push_back(new Sheep()); players.push_back(new Turkey());
+                    players.push_back(new Buzzo()); 
+                    players.push_back(new Chicken()); 
+                    players.push_back(new Turkey());
+                    players.push_back(new Bull());
+                    players.push_back(new Sheep()); 
+                    players.push_back(new Pig()); 
+                    
                     currentState = STATE_GAME;
                 }
             }
@@ -395,10 +460,13 @@ void GameManager::draw() {
     }
     else if (currentState == STATE_GAME || currentState == STATE_PAUSE) {
         if (level.isLoaded) {
+            
             level.drawMap();
             level.drawBus(doorClosed);
             for (auto& e : level.entities) e->draw();
             for (auto& p : players) p->draw();
+            
+            level.drawWeather();
             if (fontSmall) al_draw_text(fontSmall, al_map_rgb(255, 255, 255), SCREENWIDTH - 10, 10, ALLEGRO_ALIGN_RIGHT, level.title.c_str());
         }
         else {
@@ -431,6 +499,9 @@ void GameManager::broadcastState() {
         pkt.current_frame_y = players[i]->current_frame_y;
         pkt.isMoving = players[i]->isMoving;
         pkt.isFinished = players[i]->finished;
+
+        pkt.z = players[i]->z;
+        pkt.isJumping = players[i]->isJumping;
 
         net.broadcastPacket(&pkt, sizeof(StatePacket), false);
     }

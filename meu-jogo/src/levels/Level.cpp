@@ -11,6 +11,9 @@ Level::Level() {
     busFrameW = 0;
     busFrameH = 0;
     isLoaded = false;
+    
+    weatherSprite = nullptr;
+    hasWeather = false;
 
     for (int i = 0; i < HMAP; i++)
         for (int j = 0; j < WMAP; j++)
@@ -47,7 +50,7 @@ bool Level::loadMapFromJson(const std::string& jsonPath) {
     }
     entities.clear();
 
-    // Leitura dos campos
+
     if (j.contains("title") && !j["title"].is_null())
         title = j["title"].get<std::string>();
     else title = "";
@@ -55,6 +58,28 @@ bool Level::loadMapFromJson(const std::string& jsonPath) {
     if (j.contains("nextLevel") && !j["nextLevel"].is_null())
         nextLevelPath = j["nextLevel"].get<std::string>();
     else nextLevelPath = "";
+
+    if (weatherSprite) { al_destroy_bitmap(weatherSprite); weatherSprite = nullptr; }
+    hasWeather = false;
+
+    // Agora procura por "weather" no JSON
+    if (j.contains("weather")) {
+        auto wData = j["weather"]; // wData = weatherData
+        std::string wPath = wData["path"];
+        
+        weatherSprite = ResourceManager::get().getBitmap(wPath);
+        
+        if (weatherSprite) {
+            hasWeather = true;
+            weatherFrames = wData.value("frames", 1);
+            weatherSpeed  = wData.value("speed", 10);
+            
+            // Cálculos
+            weatherFrameW = al_get_bitmap_width(weatherSprite) / weatherFrames;
+            weatherFrameH = al_get_bitmap_height(weatherSprite);
+        }
+    }
+    // -------------------------------------
 
     if (j.contains("checkpoint")) {
         checkpoint.x = j["checkpoint"]["x"].get<int>() * BLOCKSIZE;
@@ -78,6 +103,28 @@ bool Level::loadMapFromJson(const std::string& jsonPath) {
 
             if (!tiles[i]) {
                 printf("[ERRO] Falha ao carregar tile: %s\n", tileNames[i].c_str());
+            }
+        }
+    }
+
+    tileProps.clear();
+
+    if (!tileNames.empty()) {
+        tileProps.resize(tileNames.size());
+    }
+
+    if (j.contains("tileProperties")) {
+        for (auto& element : j["tileProperties"].items()) {
+            int id = std::stoi(element.key());
+
+            if (id >= 0 && id < tileProps.size()) {
+                auto props = element.value();
+
+                if (props.contains("solid")) tileProps[id].solid = props["solid"];
+                if (props.contains("deadly")) tileProps[id].deadly = props["deadly"];
+                if (props.contains("speedFactor")) tileProps[id].speedFactor = props["speedFactor"];
+                if (props.contains("forceX")) tileProps[id].forceX = props["forceX"];
+                if (props.contains("forceY")) tileProps[id].forceY = props["forceY"];
             }
         }
     }
@@ -127,6 +174,40 @@ bool Level::loadMapFromJson(const std::string& jsonPath) {
 
     isLoaded = true;
     return true;
+}
+
+void Level::updateWeather() {
+    if (!hasWeather || weatherFrames <= 1) return;
+
+    weatherTimer++;
+    if (weatherTimer >= weatherSpeed) {
+        weatherTimer = 0;
+        weatherCurrentFrame++;
+        
+        if (weatherCurrentFrame >= weatherFrames) {
+            weatherCurrentFrame = 0;
+        }
+        
+    }
+}
+
+void Level::drawWeather() {
+    if (!hasWeather || !weatherSprite) return;
+
+
+    float sx = weatherCurrentFrame * weatherFrameW;
+
+    for (int y = 0; y < SCREENHEIGHT; y += weatherFrameH) {
+        
+        for (int x = 0; x < SCREENWIDTH; x += weatherFrameW) {
+            
+            al_draw_bitmap_region(weatherSprite, 
+                sx, 0,
+                weatherFrameW, weatherFrameH,
+                x, y, 0
+            );
+        }
+    }
 }
 
 void Level::drawMap() {

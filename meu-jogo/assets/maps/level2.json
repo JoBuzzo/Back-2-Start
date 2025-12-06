@@ -1,6 +1,6 @@
 {
   "title": "Level 2 - Dirt Road",
-  "nextLevel": null,
+  "nextLevel": "assets/maps/level3.json",
   "checkpoint": {
     "x": 2,
     "y": 2
@@ -119,6 +119,39 @@
       "posX": 40,
       "posY": 18,
       "speed": 3,
+      "direction": "left",
+      "active": true,
+      "animated": true,
+      "frameCount": 2
+    },
+    {
+      "type": "car",
+      "sprite": "assets/sprites/cars/animatedPerua.png",
+      "posX": 19,
+      "posY": 20,
+      "speed": 2,
+      "direction": "left",
+      "active": true,
+      "animated": true,
+      "frameCount": 2
+    },
+    {
+      "type": "car",
+      "sprite": "assets/sprites/cars/animatedMoto.png",
+      "posX": 2,
+      "posY": 7,
+      "speed": 5,
+      "direction": "right",
+      "active": true,
+      "animated": true,
+      "frameCount": 2
+    },
+    {
+      "type": "car",
+      "sprite": "assets/sprites/cars/animatedMoto.png",
+      "posX": 2,
+      "posY": 7,
+      "speed": 5,
       "direction": "left",
       "active": true,
       "animated": true,
