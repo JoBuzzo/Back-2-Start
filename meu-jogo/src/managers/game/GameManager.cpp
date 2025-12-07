@@ -271,8 +271,8 @@ void GameManager::processNetwork() {
                             pkt->current_frame_y, 
                             pkt->isMoving, 
                             pkt->isFinished,
-                            pkt->z,         // Recebe Z
-                            pkt->isJumping  // Recebe Pulo
+                            pkt->z,
+                            pkt->isJumping
                         );
                 }
                 else if (type == PACKET_ENTITY_STATE) {
@@ -331,7 +331,7 @@ void GameManager::updateGameLogic() {
         level.updateWeather();
     }
 
-    if (!net.isServer()) return;
+    if (!net.isServer()) return;    
 
     int finishedCount = 0;
     int activePlayers = net.getNextId();

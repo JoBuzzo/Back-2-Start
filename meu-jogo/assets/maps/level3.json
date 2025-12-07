@@ -5,7 +5,7 @@
     "frames": 16,
     "speed": 10
   },
-  "nextLevel": null,
+  "nextLevel": "assets/maps/level4.json",
   "checkpoint": {
     "x": 2,
     "y": 1
