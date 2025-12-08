@@ -278,9 +278,11 @@ void GameManager::processNetwork() {
                 else if (type == PACKET_ENTITY_STATE) {
                     StatePacket* pkt = (StatePacket*)event.packet->data;
                     if (pkt->id >= 0 && pkt->id < level.entities.size()) {
-                        Car* car = (Car*)level.entities[pkt->id];
-                        car->posX = (int)pkt->x; car->posY = (int)pkt->y;
-                        car->movingLeft = (pkt->current_frame_y == 1);
+
+                        Entity* e = level.entities[pkt->id];
+                        e->posX = (int)pkt->x; 
+                        e->posY = (int)pkt->y;
+                        e->movingLeft = (pkt->current_frame_y == 1);
                     }
                 }
                 else if (type == PACKET_START_TRANSITION) {
@@ -380,10 +382,10 @@ void GameManager::updateGameLogic() {
         else finishedCount++;
     }
 
-    // 2. Colisão Carros
+    // 2. Colisão Entidades (Genérico)
     if (!accidentHappened) {
         for (auto& e : level.entities) {
-            e->move();
+            e->update(); 
             if (e->checkCollision(players)) { 
                 accidentHappened = true;
             }
@@ -599,15 +601,14 @@ void GameManager::broadcastState() {
         net.broadcastPacket(&pkt, sizeof(StatePacket), false);
     }
 
-    // Envia estado dos Carros
     for (int i = 0; i < level.entities.size(); i++) {
-        Car* car = (Car*)level.entities[i];
+        Entity* e = level.entities[i];
         StatePacket pkt;
         pkt.type = PACKET_ENTITY_STATE;
         pkt.id = i;
-        pkt.x = car->posX;
-        pkt.y = car->posY;
-        pkt.current_frame_y = car->movingLeft ? 1 : 0;
+        pkt.x = e->posX;
+        pkt.y = e->posY;
+        pkt.current_frame_y = e->movingLeft ? 1 : 0;
         pkt.isMoving = true;
         pkt.isFinished = false;
 

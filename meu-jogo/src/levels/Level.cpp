@@ -2,7 +2,13 @@
 #include <fstream>
 #include <algorithm>
 #include <nlohmann/json.hpp>
+
 #include "src/managers/resource/ResourceManager.h"
+
+#include "src/entities/cars/Car.h"
+#include "src/entities/ships/Ship.h" 
+
+#include "src/entities/players/Player.h"
 
 using json = nlohmann::json;
 
@@ -30,6 +36,7 @@ Level::~Level() {
     for (auto e : entities) {
         if (e) { e->destroy(); delete e; }
     }
+    entities.clear();
 }
 
 bool Level::loadMapFromJson(const std::string& jsonPath) {
@@ -85,7 +92,6 @@ bool Level::loadMapFromJson(const std::string& jsonPath) {
             weatherTimer = 0;
         }
     }
-    // -------------------------------------------
 
     if (j.contains("checkpoint")) {
         checkpoint.x = j["checkpoint"]["x"].get<int>() * BLOCKSIZE;
@@ -127,24 +133,36 @@ bool Level::loadMapFromJson(const std::string& jsonPath) {
     if (j.contains("entities") && j["entities"].is_array()) {
         for (auto& e : j["entities"]) {
             std::string type = e["type"];
-            if (type == "car") {
-                Car* car = new Car();
-                if (e.contains("sprite")) car->spritePath = e["sprite"].get<std::string>();
-                car->setPosX(e["posX"].get<int>());
-                car->setPosY(e["posY"].get<int>());
-                car->speed = e["speed"].get<float>();
-                car->active = e["active"].get<bool>();
-                
-                if (e.contains("frameCount")) car->frameCount = e["frameCount"].get<int>();
-                else car->frameCount = 1;
+            
+            Entity* newEntity = nullptr;
 
-                if (e.contains("animated")) car->animated = e["animated"].get<bool>();
+            if (type == "car") {
+                newEntity = new Car();
+            }
+            else if (type == "ship") {
+                newEntity = new Ship(); 
+            }
+
+            if (newEntity) {
+                if (e.contains("sprite")) newEntity->spritePath = e["sprite"].get<std::string>();
+                
+                newEntity->setPosX(e["posX"].get<int>());
+                newEntity->setPosY(e["posY"].get<int>());
+                
+                newEntity->speed = e["speed"].get<float>();
+                newEntity->setActive(e["active"].get<bool>());
+                
+                if (e.contains("frameCount")) newEntity->frameCount = e["frameCount"].get<int>();
+                else newEntity->frameCount = 1;
+
+                if (e.contains("animated")) newEntity->animated = e["animated"].get<bool>();
 
                 std::string dir = e["direction"].get<std::string>();
-                car->movingLeft = (dir == "left");
+                if (dir == "left") newEntity->movingLeft = true;
+                else newEntity->movingLeft = false;
 
-                car->reloadBitMap();
-                entities.push_back(car);
+                newEntity->load();
+                entities.push_back(newEntity);
             }
         }
     }
@@ -171,29 +189,20 @@ bool Level::loadMapFromJson(const std::string& jsonPath) {
 
 void Level::updateWeather() {
     if (!hasWeather || weatherFrames <= 1) return;
-
     weatherTimer++;
     if (weatherTimer >= weatherSpeed) {
         weatherTimer = 0;
         weatherCurrentFrame++;
-        if (weatherCurrentFrame >= weatherFrames) {
-            weatherCurrentFrame = 0;
-        }
+        if (weatherCurrentFrame >= weatherFrames) weatherCurrentFrame = 0;
     }
 }
 
 void Level::drawWeather() {
     if (!hasWeather || !weatherSprite) return;
-
     float sx = weatherCurrentFrame * weatherFrameW;
-
     for (int y = 0; y < SCREENHEIGHT; y += weatherFrameH) {
         for (int x = 0; x < SCREENWIDTH; x += weatherFrameW) {
-            al_draw_bitmap_region(weatherSprite, 
-                sx, 0,
-                weatherFrameW, weatherFrameH,
-                x, y, 0
-            );
+            al_draw_bitmap_region(weatherSprite, sx, 0, weatherFrameW, weatherFrameH, x, y, 0);
         }
     }
 }
@@ -229,7 +238,6 @@ bool Level::checkBusCollision(int px, int py, int pw, int ph) {
 void Level::reset() {
     weatherCurrentFrame = 0;
     weatherTimer = 0;
-
     if (!path.empty()) {
         loadMapFromJson(path); 
     }

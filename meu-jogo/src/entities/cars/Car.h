@@ -1,41 +1,7 @@
 #pragma once
-#include <allegro5/allegro.h>
-#include <allegro5/allegro_image.h>
-#include <string>
-#include <vector>
-#include "src/entities/players/Player.h"
-#include "src/core/Config.h"
+#include "src/entities/Entity.h"
 
-class Car {
+class Car : public Entity {
 public:
-    ALLEGRO_BITMAP* sprite;
-    std::vector<ALLEGRO_BITMAP*> frames;
-
-    std::string spritePath;
-
-    int w, h;
-    int posX, posY;
-    float speed;
-    bool movingLeft;
-    bool active;
-
-    bool animated;
-    int frameCount;
-    float currentFrame; 
-
     Car();
-    virtual ~Car() = default;
-
-    void setPosX(int value);
-    void setPosY(int value);
-    void setDirection();
-
-    virtual void draw();
-    virtual void destroy();
-    virtual void move();
-
-    virtual bool collide(Player& player);
-    virtual bool checkCollision(std::vector<Player*>& players);
-
-    virtual void reloadBitMap();
 };

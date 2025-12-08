@@ -74,10 +74,10 @@
   ],
   "entities": [
     {
-      "type": "car",
+      "type": "ship",
       "sprite": "assets/sprites/ships/ship.png",
       "posX": 2,
-      "posY":-1 ,
+      "posY": -1 ,
       "speed": 1 ,
       "direction": "right",
       "active": true,
@@ -85,7 +85,29 @@
       "frameCount": 12
     },
     {
-      "type": "car",
+      "type": "ship",
+      "sprite": "assets/sprites/ships/ship.png",
+      "posX": 30,
+      "posY": -1 ,
+      "speed": 1 ,
+      "direction": "right",
+      "active": true,
+      "animated": true,
+      "frameCount": 12
+    },
+    {
+      "type": "ship",
+      "sprite": "assets/sprites/ships/ship.png",
+      "posX": 50,
+      "posY": -1 ,
+      "speed": 1 ,
+      "direction": "right",
+      "active": true,
+      "animated": true,
+      "frameCount": 12
+    },
+    {
+      "type": "ship",
       "sprite": "assets/sprites/ships/ship2.png",
       "posX": 2,
       "posY": 8,
@@ -96,7 +118,29 @@
       "frameCount": 12
     },
     {
-      "type": "car",
+      "type": "ship",
+      "sprite": "assets/sprites/ships/ship2.png",
+      "posX": 25,
+      "posY": 8,
+      "speed": 1.5 ,
+      "direction": "left",
+      "active": true,
+      "animated": true,
+      "frameCount": 12
+    },
+    {
+      "type": "ship",
+      "sprite": "assets/sprites/ships/ship2.png",
+      "posX": 50,
+      "posY": 8,
+      "speed": 1.5 ,
+      "direction": "left",
+      "active": true,
+      "animated": true,
+      "frameCount": 12
+    },
+    {
+      "type": "ship",
       "sprite": "assets/sprites/ships/ship3.png",
       "posX": 20,
       "posY": 9,
@@ -107,10 +151,21 @@
       "frameCount": 12
     },
     {
-      "type": "car",
+      "type": "ship",
       "sprite": "assets/sprites/ships/ship4.png",
       "posX": 25,
       "posY": 14, 
+      "speed": 2 ,
+      "direction": "right",
+      "active": true,
+      "animated": true,
+      "frameCount": 12
+    },
+    {
+      "type": "ship",
+      "sprite": "assets/sprites/ships/ship4.png",
+      "posX": 50,
+      "posY": 13, 
       "speed": 2 ,
       "direction": "right",
       "active": true,

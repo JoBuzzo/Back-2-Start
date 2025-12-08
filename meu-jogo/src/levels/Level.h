@@ -4,7 +4,9 @@
 #include <allegro5/allegro_image.h>
 #include <string>
 #include <vector>
-#include "src/entities/cars/Car.h"
+
+// IMPORTANTE: O Level precisa conhecer o Entity completo aqui
+#include "src/entities/Entity.h"
 
 struct Point { int x, y; };
 struct TileData {
@@ -18,7 +20,6 @@ struct TileData {
 class Level {
 public:
     bool isLoaded;
-
     std::string title;
     std::string nextLevelPath;
     std::string path;
@@ -31,7 +32,9 @@ public:
 
     int map[HMAP][WMAP];
     std::vector<std::string> tileNames;
-    std::vector<Car*> entities;
+    
+    std::vector<Entity*> entities; 
+    
     ALLEGRO_BITMAP* tiles[20] = { nullptr };
     std::vector<TileData> tileProps;
 
@@ -53,17 +56,18 @@ public:
     bool checkBusCollision(int px, int py, int pw, int ph);
     void updateWeather();
     void drawWeather();
+    
     TileData getTileProp(int id) {
         if (id >= 0 && id < tileProps.size()) return tileProps[id];
         return TileData();
     }
+    
     int getTileIdAt(int x, int y) {
         int col = x / BLOCKSIZE;
         int row = y / BLOCKSIZE;
-
-        if (col < 0 || col >= WMAP || row < 0 || row >= HMAP) return 0; // Retorna 0 (Vazio) se fora do mapa
-        
+        if (col < 0 || col >= WMAP || row < 0 || row >= HMAP) return 0;
         return map[row][col];
     }
+    
     void reset();
 };

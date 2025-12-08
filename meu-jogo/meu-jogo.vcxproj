@@ -212,7 +212,9 @@
     <ClCompile Include="src\levels\Level.cpp" />
     <ClCompile Include="src\managers\game\GameManager.cpp" />
     <ClCompile Include="src\managers\network\NetworkManager.cpp" />
+    <ClCompile Include="src\entities\Entity.cpp" />
     <ClCompile Include="src\entities\cars\Car.cpp" />
+    <ClCompile Include="src\entities\ships\Ship.cpp" />
     <ClCompile Include="src\entities\players\Player.cpp" />
     <ClCompile Include="src\entities\players\Chicken\Chicken.cpp" />
     <ClCompile Include="src\entities\players\Bull\Bull.cpp" />
