@@ -29,8 +29,8 @@ void NetworkManager::shutdown() {
 
 bool NetworkManager::startHost(int port) {
     _isServer = true;
-    _myPlayerId = 0;   // Host é sempre 0
-    _nextPlayerId = 1; // Próximo será 1
+    _myPlayerId = 0;   // Host e sempre 0
+    _nextPlayerId = 1; // Proximo sera 1
 
     ENetAddress address;
     address.host = ENET_HOST_ANY;
@@ -48,7 +48,7 @@ bool NetworkManager::startHost(int port) {
 
 bool NetworkManager::startClient(std::string ip, int port) {
     _isServer = false;
-    _myPlayerId = -1; // Ainda não sei quem sou
+    _myPlayerId = -1; // Ainda nao sei quem sou
 
     host = enet_host_create(NULL, 1, 2, 0, 0);
     if (host == nullptr) return false;
@@ -57,7 +57,7 @@ bool NetworkManager::startClient(std::string ip, int port) {
     enet_address_set_host(&address, ip.c_str());
     address.port = port;
 
-    // Inicia conexão
+    // Inicia conexao
     serverPeer = enet_host_connect(host, &address, 2, 0);
 
     if (serverPeer == nullptr) {
@@ -65,7 +65,7 @@ bool NetworkManager::startClient(std::string ip, int port) {
         return false;
     }
 
-    // Espera até 5 segundos para confirmar a conexão técnica
+    // Espera ate 5 segundos para confirmar a conexao tecnica
     ENetEvent event;
     if (enet_host_service(host, &event, 5000) > 0 &&
         event.type == ENET_EVENT_TYPE_CONNECT) {
@@ -111,7 +111,7 @@ void NetworkManager::flush() {
     if (host) enet_host_flush(host);
 }
 
-// O Coração do Network Manager
+// O Coracao do Network Manager
 void NetworkManager::update(std::function<void(ENetPeer*)> onConnect,
     std::function<void(ENetPeer*)> onDisconnect,
     std::function<void(ENetEvent&)> onReceive)

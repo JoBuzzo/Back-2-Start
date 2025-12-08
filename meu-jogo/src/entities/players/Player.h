@@ -223,23 +223,24 @@ public:
 
     void updateMovingState() { isMoving = (keys[W] || keys[S] || keys[A] || keys[D]); }
 
-virtual void getHitbox(int &x, int &y, int &w, int &h) {
-        // --- LÓGICA PADRÃO PARA TODOS OS BICHOS ---
-        
+    virtual void getHitbox(int &x, int &y, int &w, int &h)
+    {
+        // --- LÓGICA PADRÃO PARA TODOS OS Players ---
+
         // 1. Define o tamanho da hitbox (Proporcional ao Sprite)
         // Largura: 50% do sprite (evita prender o ombro na parede)
-        w = this->w / 2; 
-        
+        w = this->w / 2;
+
         // Altura: 25% do sprite (apenas os pés)
-        h = this->h / 4; 
+        h = this->h / 4;
 
         // 2. Centraliza e Alinha ao Fundo
         // Centraliza no X
-        x = posX + (this->w - w) / 2; 
-        
+        x = posX + (this->w - w) / 2;
+
         // Empurra para o fundo (Y)
         // (Posição Y do Sprite + Altura Total) - Altura da Hitbox
-        y = posY + (this->h - h);     
+        y = posY + (this->h - h);
     }
 
     virtual void resetPos()
@@ -257,12 +258,13 @@ virtual void getHitbox(int &x, int &y, int &w, int &h) {
     }
     void destroy() { sprite = nullptr; }
 
-    void setNetworkState(float x, float y, int frameY, bool moving, bool finishedState, float netZ, bool netJumping)
+    void setNetworkState(float x, float y, int frameY, bool moving, bool netRunning, bool finishedState, float netZ, bool netJumping)
     {
         posX = (int)x;
         posY = (int)y;
         current_frame_y = frameY;
         isMoving = moving;
+        isRunning = netRunning;
         finished = finishedState;
         z = netZ;
         isJumping = netJumping;

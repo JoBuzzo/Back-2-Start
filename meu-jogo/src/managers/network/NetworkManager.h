@@ -21,7 +21,7 @@ public:
     bool init();
     void shutdown();
 
-    // Conex�o
+    // Conexao
     bool startHost(int port);
     bool startClient(std::string ip, int port);
     void disconnect();
@@ -34,13 +34,13 @@ public:
     void incrementNextId() { _nextPlayerId++; }
 
     // Envio de Dados
-    // Envia para um peer espec�fico (ou para o servidor se for cliente)
+    // Envia para um peer especifico (ou para o servidor se for cliente)
     void sendPacket(ENetPeer* peer, void* data, size_t size, bool reliable);
 
     // Envia para todos (Broadcast)
     void broadcastPacket(void* data, size_t size, bool reliable);
 
-    // Envia imediatamente (sem esperar o pr�ximo loop)
+    // Envia imediatamente (sem esperar o proximo loop)
     void flush();
 
     // --- O LOOP PRINCIPAL ---
