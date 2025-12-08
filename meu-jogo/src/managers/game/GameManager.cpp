@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <vector>
 #include <string>
+#include <algorithm>
 
 // Include dos bichos
 #include "src/entities/players/Bull/Bull.h"
@@ -542,13 +543,59 @@ void GameManager::draw() {
     else if (currentState == STATE_GAME || currentState == STATE_PAUSE) {
         if (level.isLoaded) {
             
-            // 1. Mapa
+            // 1. Mapa (Fundo)
             level.drawMap();
             
-            // 2. Entidades
+            // 2. Ônibus (Fundo estático)
             level.drawBus(doorClosed);
-            for (auto& e : level.entities) e->draw();
-            for (auto& p : players) p->draw();
+
+            // === LÓGICA DE Y-SORTING (SEM HERANÇA) ===
+            
+            // Estrutura auxiliar para guardar qualquer objeto desenhável
+            struct RenderItem {
+                float yVal; // Posição da BASE do objeto (Y + Altura)
+                int type;   // 0 = Entity, 1 = Player
+                void* ptr;  // Ponteiro genérico (aceita qualquer coisa)
+            };
+
+            std::vector<RenderItem> renderList;
+
+            // -- Adiciona as ENTIDADES --
+            for (auto& e : level.entities) {
+                // Se a entidade não estiver ativa, nem adiciona na lista
+                if(e->active) { 
+                    renderList.push_back({ e->posY + e->h, 0, (void*)e });
+                }
+            }
+
+            // -- Adiciona os PLAYERS --
+            for (auto& p : players) {
+                // Precisamos calcular a base do player (Pés)
+                int hx, hy, hw, hh;
+                p->getHitbox(hx, hy, hw, hh);
+                
+                // O Y de ordenação é o topo da hitbox + altura da hitbox (pés)
+                float feetY = (float)(hy + hh); 
+                
+                renderList.push_back({ feetY, 1, (void*)p });
+            }
+
+            // -- ORDENAÇÃO --
+            // Ordena do menor Y (fundo da tela) para o maior Y (frente da tela)
+            std::sort(renderList.begin(), renderList.end(), [](const RenderItem& a, const RenderItem& b) {
+                return a.yVal < b.yVal;
+            });
+
+            // -- DESENHO --
+            for (auto& item : renderList) {
+                if (item.type == 0) {
+                    // É Entity: Faz cast e desenha
+                    ((Entity*)item.ptr)->draw();
+                } else {
+                    // É Player: Faz cast e desenha
+                    ((Player*)item.ptr)->draw();
+                }
+            }
             
             // 3. Overlay (Neve)
             level.drawWeather();
@@ -560,11 +607,9 @@ void GameManager::draw() {
             al_draw_text(font, al_map_rgb(255, 255, 255), SCREENWIDTH / 2, SCREENHEIGHT / 2, ALLEGRO_ALIGN_CENTRE, "SINCRONIZANDO...");
         }
 
-        // Tela de transição / Morte
         if (transitionAlpha > 0.0f) 
             al_draw_filled_rectangle(0, 0, SCREENWIDTH, SCREENHEIGHT, al_map_rgba_f(0, 0, 0, transitionAlpha));
 
-        // Texto da Morte (Zoeira)
         if (isDeathSequence && transitionAlpha > 0.9f) {
             al_draw_text(font, al_map_rgb(255, 50, 50), SCREENWIDTH / 2, SCREENHEIGHT / 2 - 20, ALLEGRO_ALIGN_CENTRE, "VOCE PERDEU!");
             al_draw_text(fontSmall, al_map_rgb(200, 200, 200), SCREENWIDTH / 2, SCREENHEIGHT / 2 + 20, ALLEGRO_ALIGN_CENTRE, currentMockery.c_str());
@@ -578,9 +623,10 @@ void GameManager::draw() {
         }
     }
     else if (currentState == STATE_ENDGAME) {
-        al_draw_text(font, al_map_rgb(0, 255, 0), SCREENWIDTH / 2, SCREENHEIGHT / 2 - 20, ALLEGRO_ALIGN_CENTRE, "PARABENS!");
-        al_draw_text(font, al_map_rgb(255, 255, 255), SCREENWIDTH / 2, SCREENHEIGHT / 2 + 20, ALLEGRO_ALIGN_CENTRE, "VOCES COMPLETARAM O JOGO.");
-        al_draw_text(font, al_map_rgb(100, 100, 100), SCREENWIDTH / 2, SCREENHEIGHT - 50, ALLEGRO_ALIGN_CENTRE, "Pressione ESC para voltar");
+       // ... (Código endgame igual) ...
+       al_draw_text(font, al_map_rgb(0, 255, 0), SCREENWIDTH / 2, SCREENHEIGHT / 2 - 20, ALLEGRO_ALIGN_CENTRE, "PARABENS!");
+       al_draw_text(font, al_map_rgb(255, 255, 255), SCREENWIDTH / 2, SCREENHEIGHT / 2 + 20, ALLEGRO_ALIGN_CENTRE, "VOCES COMPLETARAM O JOGO.");
+       al_draw_text(font, al_map_rgb(100, 100, 100), SCREENWIDTH / 2, SCREENHEIGHT - 50, ALLEGRO_ALIGN_CENTRE, "Pressione ESC para voltar");
     }
 }
 

@@ -11,7 +11,7 @@ class Player;
 
 class Entity {
 public:
-    bool debugMode =  false;
+    bool debugMode =  true;
 
     ALLEGRO_BITMAP* sprite;
     std::vector<ALLEGRO_BITMAP*> frames;
