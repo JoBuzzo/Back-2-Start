@@ -216,12 +216,11 @@
     <ClCompile Include="src\entities\cars\Car.cpp" />
     <ClCompile Include="src\entities\ships\Ship.cpp" />
     <ClCompile Include="src\entities\players\Player.cpp" />
-    <ClCompile Include="src\entities\players\Chicken\Chicken.cpp" />
-    <ClCompile Include="src\entities\players\Bull\Bull.cpp" />
     <ClCompile Include="src\entities\players\Buzzo\Buzzo.cpp" />
-    <ClCompile Include="src\entities\players\Pig\Pig.cpp" />
-    <ClCompile Include="src\entities\players\Sheep\Sheep.cpp" />
-    <ClCompile Include="src\entities\players\Turkey\Turkey.cpp" />
+    <ClCompile Include="src\entities\players\Emanuel\Emanuel.cpp" />
+    <ClCompile Include="src\entities\players\Galvao\Galvao.cpp" />
+    <ClCompile Include="src\entities\players\Luis\Luis.cpp" />
+    <ClCompile Include="src\entities\players\Renatinho\Renatinho.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="meu-jogo.rc" />

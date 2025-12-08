@@ -9,13 +9,13 @@
 #include <string>
 #include <algorithm>
 
-// Include dos bichos
-#include "src/entities/players/Bull/Bull.h"
+// Include dos players
 #include "src/entities/players/Buzzo/Buzzo.h"
-#include "src/entities/players/Chicken/Chicken.h"
-#include "src/entities/players/Pig/Pig.h"
-#include "src/entities/players/Sheep/Sheep.h"
-#include "src/entities/players/Turkey/Turkey.h"
+#include "src/entities/players/Emanuel/Emanuel.h"
+#include "src/entities/players/Galvao/Galvao.h"
+#include "src/entities/players/Luis/Luis.h"
+#include "src/entities/players/Renatinho/Renatinho.h"
+
 
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "winmm.lib")
@@ -408,10 +408,7 @@ void GameManager::updateGameLogic() {
     broadcastState();
 }
 
-void GameManager::resetPlayersToSpawn() {
-    // Não precisa chamar level.reset() aqui, pois já chamamos no startDeathSequence
-    // ou podemos manter se quiser garantir
-    
+void GameManager::resetPlayersToSpawn() {    
     for (size_t i = 0; i < players.size(); i++) {
         players[i]->finished = false;
         
@@ -442,11 +439,10 @@ void GameManager::handleInput(ALLEGRO_EVENT& ev) {
                     
                     players.clear();
                     players.push_back(new Buzzo()); 
-                    players.push_back(new Chicken()); 
-                    players.push_back(new Turkey());
-                    players.push_back(new Bull());
-                    players.push_back(new Sheep()); 
-                    players.push_back(new Pig()); 
+                    players.push_back(new Renatinho()); 
+                    players.push_back(new Luis());
+                    players.push_back(new Emanuel());
+                    players.push_back(new Galvao());
 
                     resetPlayersToSpawn();
                     currentState = STATE_GAME;
@@ -456,11 +452,10 @@ void GameManager::handleInput(ALLEGRO_EVENT& ev) {
                 if (net.startClient(inputIP, 1234)) {
                     players.clear();
                     players.push_back(new Buzzo()); 
-                    players.push_back(new Chicken()); 
-                    players.push_back(new Turkey());
-                    players.push_back(new Bull());
-                    players.push_back(new Sheep()); 
-                    players.push_back(new Pig()); 
+                    players.push_back(new Renatinho());
+                    players.push_back(new Luis());
+                    players.push_back(new Emanuel());
+                    players.push_back(new Galvao());
                     
                     currentState = STATE_GAME;
                 }
